@@ -6,9 +6,9 @@ EmpowerNet is a cutting-edge forensic security platform designed to detect and v
 EmpowerNet mission is to restore trust in digital media. Whether it's a deepfake video or a sophisticated phishing site, EmpowerNet analyzes the content and anchors the results to a public ledger for lifetime verification.
 
 ## 🛠️ Tech Stack
-- **Frontend**: React, Vite, Tailwind CSS, Zustand
+- onsensus**Frontend**: React, Vite, Tailwind CSS, Zustand
 - **Backend**: FastAPI (Python), TIMM (EfficientNet-B5), MTCNN
-- **Ledger**: Hedera Consensus Service (HCS)
+- **Ledger**: Hedera C Service (HCS)
 - **Extension**: Chrome Extension Manifest V3
 - **Forensics**: jsPDF for evidence reporting
 

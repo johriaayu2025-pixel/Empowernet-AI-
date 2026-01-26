@@ -55,7 +55,7 @@ const DeepfakeDetection: React.FC = () => {
       if (selectedFile.type.startsWith('video/')) mediaType = 'video';
       if (selectedFile.type.startsWith('audio/')) mediaType = 'audio';
 
-      const res = await analyzeMediaDeepfake(base64, selectedFile.type, mediaType);
+      const res = await analyzeMediaDeepfake(base64, selectedFile.type, mediaType, selectedFile.name);
 
       setResult(res);
       addScan({

@@ -3,7 +3,8 @@ export async function runScan(payload: {
   content: string;
   label?: string;
 }) {
-  const response = await fetch("http://127.0.0.1:8001/api/scan", {
+  const baseUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8001";
+  const response = await fetch(`${baseUrl}/api/scan`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -19,7 +20,8 @@ export async function runScan(payload: {
 }
 
 export async function verifyEvidence(hash: string) {
-  const response = await fetch("http://127.0.0.1:8001/api/verify", {
+  const baseUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8001";
+  const response = await fetch(`${baseUrl}/api/verify`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -49,12 +49,12 @@ export const analyzeTextScam = async (text: string): Promise<ScanResult> => {
 /**
  * MULTIMODAL FORENSIC DETECTION (Now runs on Local Backend)
  */
-export const analyzeMediaDeepfake = async (base64Data: string, mimeType: string, type: 'image' | 'video' | 'audio'): Promise<ScanResult> => {
+export const analyzeMediaDeepfake = async (base64Data: string, mimeType: string, type: 'image' | 'video' | 'audio', filename?: string): Promise<ScanResult> => {
 
   const res = await runScan({
     type: type,
     content: base64Data, // backend expects raw base64 without prefix
-    label: `Deepfake Page ${type} Scan`
+    label: filename || `Deepfake Page ${type} Scan`
   });
 
   return {
