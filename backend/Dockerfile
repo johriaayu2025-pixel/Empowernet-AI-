@@ -5,11 +5,12 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install system dependencies required for OpenCV, Audio analysis, and Face detection
-RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    libgl1 \
     libglib2.0-0 \
     ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
