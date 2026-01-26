@@ -14,6 +14,14 @@ import os
 
 app = FastAPI()
 
+@app.get("/")
+def read_root():
+    return {"status": "EmpowerNet API is Online"}
+
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
 # Railway/Production CORS handling
 allowed_origins = [
     "http://localhost:3000",
