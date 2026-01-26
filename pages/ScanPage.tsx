@@ -139,7 +139,7 @@ const ScanPage: React.FC = () => {
         });
       }
     } catch (err) {
-      setError('Analysis failed. Ensure server is running on port 8001.');
+      setError(`Analysis failed. Ensure the AI backend is reachable. ${import.meta.env.DEV ? 'Check port 8001.' : ''}`);
       console.error(err);
     } finally {
       setIsScanning(false);

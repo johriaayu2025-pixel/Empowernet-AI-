@@ -79,7 +79,7 @@ const DeepfakeDetection: React.FC = () => {
         });
       }
     } catch (err) {
-      setError('Model inference failed. Hardware acceleration might be needed.');
+      setError(`Analysis failed. Ensure the AI backend is reachable. ${import.meta.env.DEV ? 'Check port 8001.' : ''}`);
       console.error(err);
     } finally {
       setIsScanning(false);
