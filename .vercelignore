@@ -1,0 +1,9 @@
+backend/
+empowernet-extension/
+Dockerfile
+railway.json
+requirements.txt
+.env
+.env.local
+node_modules/
+dist/
