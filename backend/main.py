@@ -3,11 +3,11 @@ import json
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 
-from ml.text_infer import analyze_text
-from ml.image_infer import analyze_image_base64
-from ml.audio_infer import analyze_audio
-from ml.video_infer import analyze_video_base64
-from ml.video_plus_infer import analyze_video_base64_plus
+# Deferred imports to save memory on small instances
+# from ml.text_infer import analyze_text
+# from ml.image_infer import analyze_image_base64
+# from ml.audio_infer import analyze_audio
+# from ml.video_plus_infer import analyze_video_base64_plus
 from blockchain.blockchain_service import blockchain_service
 
 import os
@@ -71,6 +71,7 @@ def scan(payload: dict):
             is_test_file = True
             
         if is_test_file:
+            # ... (result content remains same)
             result = {
                 "category": "DEEPFAKE",
                 "confidence": 0.99,
@@ -97,12 +98,16 @@ def scan(payload: dict):
                 }
             }
         elif scan_type == "text":
+            from ml.text_infer import analyze_text
             result = analyze_text(content)
         elif scan_type == "image":
+            from ml.image_infer import analyze_image_base64
             result = analyze_image_base64(content)
         elif scan_type == "audio":
+            from ml.audio_infer import analyze_audio
             result = analyze_audio(content)
         elif scan_type == "video":
+            from ml.video_plus_infer import analyze_video_base64_plus
             result = analyze_video_base64_plus(content)
         else:
             return {"error": "Unsupported scan type"}
