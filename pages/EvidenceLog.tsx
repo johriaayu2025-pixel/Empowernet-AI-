@@ -23,21 +23,27 @@ const EvidenceLog: React.FC = () => {
   const rawScans = useAppStore((state) => state.scans);
   const scans = Array.isArray(rawScans) ? rawScans : [];
 
+  const verifyScan = useAppStore((state) => state.verifyScan);
+
   const [selectedScan, setSelectedScan] = useState<any>(null);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [verificationResult, setVerificationResult] = useState<any>(null);
+  const [currentVerifyingId, setCurrentVerifyingId] = useState<string | null>(null);
 
-  const handleVerify = async (hash: string) => {
+  const handleVerify = async (id: string, hash: string) => {
     setIsVerifying(true);
-    setVerificationResult(null);
+    setCurrentVerifyingId(id);
     try {
       const res = await verifyEvidence(hash);
-      setVerificationResult(res);
+      verifyScan(id, res);
+      // If modal is open for this scan, update it locally too
+      if (selectedScan && selectedScan.id === id) {
+        setSelectedScan({ ...selectedScan, verificationStatus: res.status === 'verified' ? 'verified' : 'failed' });
+      }
     } catch (err) {
       console.error(err);
-      setVerificationResult({ verified: false, error: "Verification Service Offline" });
     } finally {
       setIsVerifying(false);
+      setCurrentVerifyingId(null);
     }
   };
 
@@ -49,13 +55,13 @@ const EvidenceLog: React.FC = () => {
 
     // Header
     doc.setFontSize(22);
-    doc.setTextColor(79, 70, 229); // indigo-600
+    doc.setTextColor(139, 92, 246); // violet-600
     doc.text("EMPOWERNET FORENSIC AUDIT", margin, y);
     y += lineHeight * 1.5;
 
     doc.setFontSize(10);
     doc.setTextColor(100);
-    doc.text(`Report ID: ${scan.id}`, margin, y);
+    doc.text(`Report ID: EV-2025-${scan.id.slice(-6).toUpperCase()}`, margin, y);
     doc.text(`Generated: ${new Date().toLocaleString()}`, 120, y);
     y += lineHeight * 2;
 
@@ -78,20 +84,20 @@ const EvidenceLog: React.FC = () => {
       doc.setFont("helvetica", "bold");
       doc.text(label, margin, y);
       doc.setFont("helvetica", "normal");
-      doc.text(value, margin + 40, y);
+      doc.text(value, margin + 45, y);
       y += 8;
     });
 
     y += lineHeight;
 
-    // Forensic Proof
+    // Blockchain Evidence
     doc.setFontSize(14);
-    doc.text("FORENSIC PROOF (PUBLIC LEDGER)", margin, y);
+    doc.text("BLOCKCHAIN EVIDENCE PROOF", margin, y);
     y += lineHeight;
 
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
-    doc.text("Forensic Proof Hash (SHA-256):", margin, y);
+    doc.text("Evidence Hash (SHA-256):", margin, y);
     y += 6;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
@@ -99,40 +105,27 @@ const EvidenceLog: React.FC = () => {
     y += 12;
 
     doc.setFontSize(11);
-    doc.text("Public Ledger:", margin, y);
-    doc.text("Hedera Consensus Service (HCS)", margin + 40, y);
+    doc.text("Blockchain Network:", margin, y);
+    doc.text("Polygon Amoy Testnet (EVM)", margin + 45, y);
     y += 8;
-    doc.text("Network:", margin, y);
-    doc.text("Hedera Testnet", margin + 40, y);
+    doc.text("Transaction Hash:", margin, y);
+    doc.setFontSize(9);
+    doc.text(scan.blockchainTx || "N/A", margin + 45, y, { maxWidth: 125 });
     y += lineHeight;
 
-    // Consensus Metadata
-    if (verificationResult?.verified) {
-      doc.setFontSize(14);
-      doc.setTextColor(16, 185, 129); // green-500
-      doc.text("CONSENSUS VERIFICATION DETAILS", margin, y);
-      y += lineHeight;
-
-      doc.setFontSize(11);
-      doc.setTextColor(0);
-      doc.text("Transaction ID:", margin, y);
-      doc.text(verificationResult.transactionId || "0.0.123456@123456789.0", margin + 40, y);
-      y += 8;
-      doc.text("Timestamp:", margin, y);
-      doc.text(verificationResult.consensusTimestamp ? new Date(verificationResult.consensusTimestamp * 1000).toISOString() : "Confirmed", margin + 40, y);
-      y += 8;
-      doc.text("Topic ID:", margin, y);
-      doc.text(verificationResult.topicId || "0.0.4571923", margin + 40, y);
-      y += lineHeight;
-    }
-
-    // Disclaimer
-    y = 260;
+    // Verification Statement
+    y = 250;
+    doc.setFontSize(9);
+    doc.setTextColor(139, 92, 246);
+    doc.setFont("helvetica", "bold");
+    doc.text("VERIFICATION STATEMENT", margin, y);
+    y += 6;
     doc.setFontSize(8);
-    doc.setTextColor(150);
-    doc.text("This report is cryptographically anchored to the Hedera Public Ledger. Any tampering with the digital media", margin, y);
+    doc.setTextColor(100);
+    doc.setFont("helvetica", "normal");
+    doc.text("This report is cryptographically verifiable and anchored on the Polygon blockchain.", margin, y);
     y += 4;
-    doc.text("will result in a hash mismatch, invalidating this certificate. EmpowerNet Forensic Engine v3.0.", margin, y);
+    doc.text("Any modification to the original file or this document invalidates this digital proof.", margin, y);
 
     doc.save(`Forensic_Report_${scan.id}.pdf`);
   };
@@ -152,8 +145,8 @@ const EvidenceLog: React.FC = () => {
             </p>
           </div>
         </div>
-        <span className="text-xs font-bold bg-violet-50 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 px-4 py-2 rounded-full border border-violet-100 dark:border-violet-800">
-          Network: Hedera Testnet
+        <span className="text-xs font-bold bg-violet-600 text-white px-4 py-2 rounded-full shadow-lg">
+          ✅ Polygon Amoy Testnet
         </span>
       </div>
 
@@ -205,13 +198,32 @@ const EvidenceLog: React.FC = () => {
                   {r.hash}
                 </td>
                 <td className="px-6 py-4">
-                  <button
-                    onClick={() => setSelectedScan(r)}
-                    className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold hover:underline"
-                  >
-                    <ExternalLink size={12} />
-                    View Details
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => setSelectedScan(r)}
+                      className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold hover:underline"
+                    >
+                      <ExternalLink size={12} />
+                      View Certificate
+                    </button>
+                    <button
+                      onClick={() => handleVerify(r.id, r.hash)}
+                      disabled={isVerifying && currentVerifyingId === r.id}
+                      className={`flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-[9px] font-black tracking-wider uppercase transition-all ${r.verificationStatus === 'verified'
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200'
+                          : r.verificationStatus === 'failed'
+                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 hover:bg-gray-200'
+                        }`}
+                    >
+                      {isVerifying && currentVerifyingId === r.id ? (
+                        <Loader2 size={10} className="animate-spin" />
+                      ) : (
+                        <ShieldCheck size={10} />
+                      )}
+                      {r.verificationStatus === 'verified' ? 'Verified' : r.verificationStatus === 'failed' ? 'Retry' : 'Verify'}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -223,11 +235,10 @@ const EvidenceLog: React.FC = () => {
       {selectedScan && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
           <div className="bg-white dark:bg-gray-800 rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="bg-indigo-600 dark:bg-indigo-700 p-8 text-white relative">
+            <div className="bg-violet-600 dark:bg-violet-700 p-8 text-white relative">
               <button
                 onClick={() => {
                   setSelectedScan(null);
-                  setVerificationResult(null);
                 }}
                 className="absolute top-4 right-4 text-white/80 hover:text-white"
               >
@@ -238,90 +249,104 @@ const EvidenceLog: React.FC = () => {
                   <ShieldCheck size={32} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">
-                    Evidence Certificate
+                  <h2 className="text-xl font-bold uppercase tracking-tight">
+                    Forensic Evidence Certificate
                   </h2>
-                  <p className="text-sm opacity-80">
-                    Verified Tamper-Proof Record
+                  <p className="text-sm opacity-80 font-medium">
+                    "This report is cryptographically verifiable and anchored on the Polygon blockchain."
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">
-                    Resource Label
-                  </p>
-                  <p className="text-sm font-bold text-gray-900 dark:text-white">
-                    {selectedScan.label}
-                  </p>
-                </div>
-                <div className="space-y-1 text-right">
-                  <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase">
-                    Analysis Status
-                  </p>
-                  <span className={`text-xs font-black px-2 py-1 rounded uppercase ${selectedScan.status === 'SCAM' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'}`}>
-                    {selectedScan.status}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 dark:bg-gray-900/50 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 space-y-4">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500 dark:text-gray-400 font-medium flex items-center gap-2">
-                    <Cpu size={14} />
-                    Neural Inference Output
-                  </span>
-                  <span className="text-indigo-600 dark:text-indigo-400 font-black">
-                    {selectedScan.confidence}
-                  </span>
-                </div>
-
-                <div className="p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 font-mono text-[10px] text-gray-500 dark:text-gray-400 break-all leading-relaxed">
-                  {selectedScan.hash}
-                </div>
-
-                <div className="flex items-center gap-6 text-[10px] text-gray-400">
-                  <div className="flex items-center gap-2">
-                    <Calendar size={12} />
-                    {selectedScan.date}
+            <div className="p-8 space-y-6 max-h-[70vh] overflow-y-auto">
+              {/* 1. Analysis Summary */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">1. Analysis Summary</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">Resource Origin</p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedScan.label}</p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <FileText size={12} />
-                    {selectedScan.type} SOURCE
+                  <div className="space-y-1 text-right">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">Forensic Verdict</p>
+                    <span className={`text-[10px] font-black px-2 py-1 rounded-md uppercase ${selectedScan.status === 'SCAM' || selectedScan.status === 'DEEPFAKE' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                      {selectedScan.status}
+                    </span>
                   </div>
                 </div>
-              </div>
-
-              {verificationResult && (
-                <div className={`p-4 rounded-xl border text-xs font-bold flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2 ${verificationResult.verified ? 'bg-green-50 text-green-700 border-green-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                  {verificationResult.verified ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                <div className="grid grid-cols-3 gap-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl">
                   <div>
-                    <p>{verificationResult.verified ? 'Consensus Proof Verified' : 'Verification Failed'}</p>
-                    {verificationResult.verified && (
-                      <a href={verificationResult.explorerUrl} target="_blank" className="text-[9px] underline opacity-80 mt-1 block">View Public Record</a>
-                    )}
+                    <p className="text-[9px] font-bold text-gray-400 uppercase">Type</p>
+                    <p className="text-xs font-bold dark:text-white">{selectedScan.type}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase">Confidence</p>
+                    <p className="text-xs font-bold dark:text-white">{selectedScan.confidence}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase">Timestamp</p>
+                    <p className="text-[10px] font-medium dark:text-white">{selectedScan.date.split(',')[0]}</p>
                   </div>
                 </div>
-              )}
+              </div>
 
-              <div className="flex gap-4">
+              {/* 2. Blockchain Evidence (NEW) */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest border-b border-gray-100 pb-2">2. Blockchain Evidence</h3>
+
+                <div className="space-y-3">
+                  <div className="p-4 bg-gray-50 dark:bg-gray-900/80 rounded-xl border border-gray-100 dark:border-gray-700">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase mb-2">Evidence Hash (SHA-256)</p>
+                    <p className="font-mono text-[10px] text-gray-800 dark:text-gray-300 break-all select-all">{selectedScan.hash}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-50 dark:bg-gray-900/80 rounded-xl border border-gray-100 dark:border-gray-700">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Network</p>
+                      <p className="text-xs font-bold dark:text-white flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 bg-violet-500 rounded-full" />
+                        Polygon Amoy
+                      </p>
+                    </div>
+                    <div className="p-4 bg-gray-50 dark:bg-gray-900/80 rounded-xl border border-gray-100 dark:border-gray-700">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase mb-1">Status</p>
+                      <p className={`text-xs font-bold ${selectedScan.verificationStatus === 'verified' ? 'text-green-600' : 'text-gray-500'}`}>
+                        {selectedScan.verificationStatus === 'verified' ? 'Verified (On-Chain)' : 'Unverified'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedScan.blockchainTx && (
+                    <div className="p-4 bg-gray-50 dark:bg-gray-900/80 rounded-xl border border-gray-100 dark:border-gray-700">
+                      <p className="text-[9px] font-bold text-gray-400 uppercase mb-2">Transaction Hash</p>
+                      <a
+                        href={`https://amoy.polygonscan.com/tx/${selectedScan.blockchainTx}`}
+                        target="_blank"
+                        className="font-mono text-[9px] text-indigo-600 hover:underline break-all"
+                      >
+                        {selectedScan.blockchainTx}
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-2">
+                <button
+                  onClick={() => handleVerify(selectedScan.id, selectedScan.hash)}
+                  disabled={isVerifying}
+                  className="flex-1 py-4 bg-violet-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-violet-700 transition-all shadow-lg"
+                >
+                  {isVerifying ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
+                  Validate Consensus
+                </button>
                 <button
                   onClick={() => downloadPDF(selectedScan)}
-                  className="flex-1 py-4 bg-gray-900 dark:bg-violet-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-black dark:hover:bg-violet-700 transition-all shadow-lg shadow-violet-500/10"
+                  className="flex-1 py-4 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all flex items-center justify-center gap-2"
                 >
                   <Download size={18} />
                   Download Forensic PDF
-                </button>
-                <button
-                  onClick={() => handleVerify(selectedScan.hash)}
-                  disabled={isVerifying}
-                  className="flex-1 py-4 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all flex items-center justify-center gap-2"
-                >
-                  {isVerifying && <Loader2 size={16} className="animate-spin" />}
-                  {isVerifying ? 'Verifying...' : 'Validate Consensus'}
                 </button>
               </div>
             </div>

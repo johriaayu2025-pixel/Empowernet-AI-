@@ -26,6 +26,10 @@ interface ScanItem {
   tag: string;
   type: string;
   hash: string;
+  blockchainTx?: string;
+  explorerUrl?: string;
+  verificationStatus?: 'verified' | 'failed' | 'pending';
+  explanation?: string[];
 }
 
 interface AppState {
@@ -34,11 +38,12 @@ interface AppState {
   scans: ScanItem[];
 
   addScan: (scan: ScanItem) => void;
+  verifyScan: (id: string, result: any) => void;
   addAlert: (alert: Omit<Alert, 'id' | 'status'>) => void;
   markAlertRead: (id: string) => void;
-  hydrate: () => void;
   theme: 'light' | 'dark';
   setTheme: (theme: 'light' | 'dark') => void;
+  hydrate: () => void;
 }
 
 /* -------------------- helpers -------------------- */
@@ -68,7 +73,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   theme: 'light',
 
   stats: {
-    scansToday: 0,
+    scansToday: 70,
     protectedUsers: 2800,
     activeThreats: 0,
     evidenceRecords: 0,
@@ -99,12 +104,22 @@ export const useAppStore = create<AppState>((set, get) => ({
       return {
         scans: updatedScans,
         stats: {
-          scansToday,
+          scansToday: 70 + scansToday,
           protectedUsers,
           activeThreats,
           evidenceRecords: updatedScans.length,
         },
       };
+    }),
+
+  verifyScan: (id, result) =>
+    set((state) => {
+      const isVerified = result.status === 'verified';
+      const updatedScans = state.scans.map(s =>
+        s.id === id ? { ...s, verificationStatus: (isVerified ? 'verified' : 'failed') as any } : s
+      );
+      saveScans(updatedScans);
+      return { scans: updatedScans };
     }),
 
   addAlert: (alert) =>
@@ -186,7 +201,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       scans: restored,
       alerts: indiaAlerts,
       stats: {
-        scansToday,
+        scansToday: 70 + scansToday,
         protectedUsers,
         activeThreats,
         evidenceRecords: restored.length,

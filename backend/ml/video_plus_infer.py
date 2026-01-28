@@ -16,7 +16,7 @@ print("Loading Video Model: efficientnet_b5...")
 try:
     model = timm.create_model("efficientnet_b5", pretrained=True, num_classes=1000)
     model.eval().to(device)
-    print("✅ Video Model Loaded.")
+    print("SUCCESS: Video Model Loaded.")
 except:
     model = timm.create_model("efficientnet_b0", pretrained=True, num_classes=1000)
     model.eval().to(device)
@@ -130,8 +130,8 @@ def analyze_video_base64_plus(base64_video: str):
     features_list = []
 
     frame_id = 0
-    # Check MORE frequently for quality (every 5th frame)
-    SAMPLE_EVERY = 5 
+    # Speed-optimized sampling (every 10th frame)
+    SAMPLE_EVERY = 10 
     
     while cap.isOpened():
         ret, frame = cap.read()
@@ -169,7 +169,7 @@ def analyze_video_base64_plus(base64_video: str):
                         eye_brightness_timelines.append(bright)
 
         frame_id += 1
-        if frame_id > 200: break # Reduce frame count if sampling is higher
+        if frame_id > 100: break # Reduced frame count for much faster processing
 
     cap.release()
 
@@ -206,14 +206,14 @@ def analyze_video_base64_plus(base64_video: str):
     final_score = min(1.0, cnn_final + liveness_penalty)
 
     # THREE-TIER CLASSIFICATION LOGIC (Robustness Improvement)
-    # Thresholds: < 0.35 (Real), 0.35 - 0.75 (Uncertain), > 0.75 (Manipulated)
+    # Aggressive Thresholds: < 0.20 (Real), 0.20 - 0.50 (Uncertain), > 0.50 (Manipulated)
     
-    if final_score >= 0.75:
+    if final_score >= 0.50:
         category = "DEEPFAKE"
         confidence = final_score
-    elif final_score >= 0.35:
+    elif final_score >= 0.20:
         category = "UNCERTAIN"
-        confidence = final_score # In the mid-range
+        confidence = final_score
     else:
         category = "REAL"
         confidence = 1 - final_score

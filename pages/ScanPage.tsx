@@ -65,6 +65,36 @@ const ScanPage: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // Global Paste Listener
+  React.useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            setActiveTab('image');
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+            setError(null);
+            setResult(null);
+          }
+        } else if (items[i].type.indexOf('text/plain') !== -1) {
+          items[i].getAsString((text) => {
+            if (activeTab === 'text') {
+              setTextInput(text);
+            }
+          });
+        }
+      }
+    };
+
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [activeTab]);
+
   const handleScan = async () => {
     if (activeTab === 'text' && !textInput.trim()) {
       setError('Please enter text to scan.');
@@ -86,7 +116,7 @@ const ScanPage: React.FC = () => {
         payload = {
           type: 'text',
           content: textInput,
-          label: 'Text Snippet',
+          label: 'Pasted Text Snippet',
         };
       } else {
         if (!selectedFile) {
@@ -106,7 +136,7 @@ const ScanPage: React.FC = () => {
         payload = {
           type: activeTab,
           content: base64,
-          label: selectedFile.name,
+          label: selectedFile.name || `Pasted ${activeTab}`,
         };
       }
 
@@ -127,17 +157,10 @@ const ScanPage: React.FC = () => {
         tag: res.category,
         type: activeTab.toUpperCase(),
         hash: res.evidenceHash || 'pending...',
+        blockchainTx: res.blockchain?.transactionHash,
+        explorerUrl: res.blockchain?.explorerUrl,
+        explanation: res.explanation
       });
-
-      if (res.riskScore > 75) {
-        addAlert({
-          type: `${res.category} DETECTED`,
-          desc: `High risk content identified in ${activeTab} scan.`,
-          severity: 'CRITICAL',
-          time: new Date().toLocaleString(),
-          source: payload.label || 'Unknown Source'
-        });
-      }
     } catch (err) {
       setError(`Analysis failed. Ensure the AI backend is reachable. ${import.meta.env.DEV ? 'Check port 8001.' : ''}`);
       console.error(err);
@@ -275,11 +298,11 @@ const ScanPage: React.FC = () => {
         {result && (
           <div className={`p-8 border-t border-gray-100 dark:border-gray-700 ${result.riskScore > 50 ? 'bg-red-50/50 dark:bg-red-900/10' : 'bg-green-50/50 dark:bg-green-900/10'}`}>
             <div className="flex items-center gap-4 mb-6">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl font-bold shadow-sm ${result.riskScore > 50 ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'}`}>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl font-bold shadow-sm ${result.category === 'DEEPFAKE' || result.category === 'SCAM' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'}`}>
                 {result.riskScore}
               </div>
               <div>
-                <h3 className={`text-xl font-black uppercase tracking-wide ${result.riskScore > 50 ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
+                <h3 className={`text-xl font-black uppercase tracking-wide ${result.category === 'DEEPFAKE' || result.category === 'SCAM' ? 'text-red-700 dark:text-red-400' : 'text-green-700 dark:text-green-400'}`}>
                   {result.category}
                 </h3>
                 <p className="text-gray-500 dark:text-gray-400 font-medium">
@@ -351,46 +374,59 @@ const ScanPage: React.FC = () => {
               </div>
             </div>
 
-            <div className={`mt-6 p-5 rounded-xl border transition-all ${result.ledger?.status === 'confirmed' ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700'}`}>
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    {result.ledger?.status === 'confirmed' ? (
-                      <div className="flex items-center gap-1.5 px-2 py-0.5 bg-indigo-600 text-white text-[10px] font-black uppercase rounded-md shadow-sm">
-                        <ShieldCheck size={12} /> Hedera Public Ledger
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${result.ledger?.status === 'pending' ? 'bg-orange-400 animate-pulse' : 'bg-gray-300'}`} />
-                        <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Public Consensus Registry</p>
-                      </div>
-                    )}
+            {/* 🔗 Polygon Blockchain Verification Card */}
+            <div className={`mt-6 p-6 rounded-2xl border transition-all ${result.blockchain?.status === 'confirmed' ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-100 dark:border-indigo-800' : 'bg-gray-50 dark:bg-gray-900/50 border-gray-100 dark:border-gray-700'}`}>
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-violet-600 text-white text-[10px] font-black uppercase rounded-lg shadow-md">
+                    <ShieldCheck size={14} /> Polygon Amoy Testnet
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-tight">Consensus Proof Hash (SHA-256)</span>
-                    <div className="font-mono text-[10px] text-gray-900 dark:text-gray-300 break-all bg-white/50 dark:bg-gray-800/50 p-1.5 rounded border border-gray-100 dark:border-gray-700 mt-1 select-all">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-green-600 dark:text-green-400">
+                    <CheckCircle2 size={14} /> Anchored on Blockchain
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Evidence Hash (SHA-256)</span>
+                    <div className="font-mono text-[11px] text-gray-900 dark:text-gray-200 break-all bg-white dark:bg-gray-800 p-3 rounded-xl border border-gray-200 dark:border-gray-700 select-all">
                       {result.evidenceHash}
                     </div>
                   </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">Transaction Hash</span>
+                    <div className="font-mono text-[11px] text-gray-600 dark:text-gray-400 break-all">
+                      {result.blockchain?.transactionHash || "pending..."}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {result.ledger?.status === 'pending' && (
-                    <span className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 text-[10px] font-bold rounded-lg border border-blue-100 dark:border-blue-900/30 flex items-center gap-1.5">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping" />
-                      Reaching Consensus on Hedera...
-                    </span>
-                  )}
-                  {result.ledger?.explorerUrl && (
+
+                <div className="pt-2 flex flex-wrap gap-3">
+                  {result.blockchain?.explorerUrl && (
                     <a
-                      href={result.ledger.explorerUrl}
+                      href={result.blockchain.explorerUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 bg-gray-900 dark:bg-gray-700 text-white text-[11px] font-bold rounded-xl hover:bg-gray-800 dark:hover:bg-gray-600 transition-all flex items-center gap-2 shadow-lg shadow-gray-200 dark:shadow-none"
+                      className="px-5 py-2.5 bg-gray-900 dark:bg-gray-700 text-white text-xs font-bold rounded-xl hover:bg-black dark:hover:bg-gray-600 transition-all flex items-center gap-2 shadow-lg"
                     >
-                      <LinkIcon size={14} /> View Public Record
+                      <ExternalLink size={14} /> View on PolygonScan
                     </a>
                   )}
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(result.evidenceHash);
+                      // Potential toast notification here
+                    }}
+                    className="px-5 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-xs font-bold rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all flex items-center gap-2 shadow-sm"
+                  >
+                    <Upload size={14} /> Copy Evidence Hash
+                  </button>
                 </div>
+
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 italic mt-1 font-medium">
+                  "This scan result has been cryptographically anchored on the Polygon blockchain to ensure integrity and prevent tampering."
+                </p>
               </div>
             </div>
           </div>

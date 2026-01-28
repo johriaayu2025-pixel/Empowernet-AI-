@@ -8,7 +8,7 @@ try:
     import easyocr
 except ImportError:
     easyocr = None
-    print("⚠️ EasyOCR not found. OCR features will be disabled.")
+    print("WARNING: EasyOCR not found. OCR features will be disabled.")
 from PIL import Image, ImageChops
 from torchvision import transforms
 from facenet_pytorch import MTCNN
@@ -23,18 +23,18 @@ print("Loading Image Model: efficientnet_b5...")
 try:
     model = timm.create_model("efficientnet_b5", pretrained=True, num_classes=1000)
     model.eval().to(device)
-    print("✅ Image Model (EfficientNet-B5) Loaded.")
+    print("SUCCESS: Image Model (EfficientNet-B5) Loaded.")
 except Exception as e:
-    print(f"❌ Failed to load B5, falling back to B0: {e}")
+    print(f"ERROR: Failed to load B5, falling back to B0: {e}")
     model = timm.create_model("efficientnet_b0", pretrained=True, num_classes=1000)
     model.eval().to(device)
 
 # ✅ 2. FACE DETECTOR
 try:
     mtcnn = MTCNN(keep_all=True, device=device, min_face_size=40)
-    print("✅ Face Detector Loaded.")
+    print("SUCCESS: Face Detector Loaded.")
 except Exception as e:
-    print(f"❌ Face Detector Error: {e}")
+    print(f"ERROR: Face Detector Error: {e}")
     mtcnn = None
 
 # ✅ 3. OCR READER (For Scam Text in Images)
@@ -43,11 +43,11 @@ reader = None
 if easyocr:
     try:
         reader = easyocr.Reader(['en'], gpu=False) # CPU safe
-        print("✅ OCR Engine Loaded.")
+        print("SUCCESS: OCR Engine Loaded.")
     except Exception as e:
-        print(f"❌ OCR Load Failed: {e}")
+        print(f"ERROR: OCR Load Failed: {e}")
 else:
-    print("ℹ️ OCR module missing. Skipping.")
+    print("INFO: OCR module missing. Skipping.")
 
 # Image preprocessing
 transform = transforms.Compose([
@@ -100,7 +100,7 @@ def analyze_image_base64(base64_str: str):
                 extracted_text = " ".join(ocr_result)
                 
                 if len(extracted_text) > 5:
-                    print(f"📄 Text found in image: {extracted_text[:50]}...")
+                    print(f"INFO: Text found in image: {extracted_text[:50]}...")
                     # Reuse Text Inference Logic
                     text_analysis = analyze_text(extracted_text)
                     
@@ -112,7 +112,7 @@ def analyze_image_base64(base64_str: str):
                         if text_analysis.get("userSummary", {}).get("triggers"):
                              features_list.extend(text_analysis["userSummary"]["triggers"])
             except Exception as e:
-                print(f"⚠️ OCR Warning: {e}")
+                print(f"WARNING: OCR Warning: {e}")
 
         # 1. Global Analysis
         global_tensor = transform(image).unsqueeze(0).to(device)
@@ -172,10 +172,13 @@ def analyze_image_base64(base64_str: str):
         # Thresholds: < 0.40 (Real), 0.40 - 0.75 (Uncertain), > 0.75 (Manipulated)
         # Exception: Scam text forces DEEPFAKE/SCAM category
         
-        if is_scam_content or final_score >= 0.75:
+        if is_scam_content:
+            category = "SCAM"
+            confidence = max(final_score, 0.85) # High confidence for confirmed scam text
+        elif final_score >= 0.70: # Lowered from 0.75 to be slightly more sensitive
             category = "DEEPFAKE"
             confidence = final_score
-        elif final_score >= 0.40:
+        elif final_score >= 0.35: # Lowered from 0.40
             category = "UNCERTAIN"
             confidence = final_score
         else:

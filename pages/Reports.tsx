@@ -60,34 +60,75 @@ const Reports: React.FC = () => {
     doc.setFont('helvetica', 'bold');
     doc.text('Scan Information', 20, 85);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Resource Label: ${selectedScan.label}`, 20, 92);
-    doc.text(`Scan Type: ${selectedScan.type}`, 20, 97);
-    doc.text(`Risk Category: ${selectedScan.status.toUpperCase()}`, 20, 102);
-    doc.text(`Confidence: ${selectedScan.confidence}`, 20, 107);
+    doc.text(`Resource Origin: ${selectedScan.label}`, 20, 95);
+    doc.text(`Scan Type: ${selectedScan.type}`, 20, 102);
+    doc.text(`Risk Category: ${selectedScan.status.toUpperCase()}`, 20, 109);
+    doc.text(`Confidence: ${selectedScan.confidence}`, 20, 116);
+
+    // Analysis Triggers
+    let nextY = 125;
+    if (selectedScan.explanation && selectedScan.explanation.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.text('Forensic Analysis Triggers:', 20, 128);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      selectedScan.explanation.slice(0, 3).forEach((trigger, i) => {
+        const splitText = doc.splitTextToSize(`• ${trigger}`, 170);
+        doc.text(splitText, 25, 135 + (i * 7));
+        nextY = 135 + (i * 7) + 10;
+      });
+      doc.setFontSize(10);
+    }
 
     // Cryptographic Evidence
-    doc.line(20, 115, 190, 115);
+    doc.line(20, nextY, 190, nextY);
+    nextY += 10;
     doc.setFont('helvetica', 'bold');
-    doc.text('Cryptographic Proof', 20, 125);
+    doc.text('Cryptographic Proof', 20, nextY);
+    nextY += 10;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text('Evidence Hash:', 20, 132);
+    doc.text('Evidence Hash (SHA-256):', 20, nextY);
+    nextY += 5;
     doc.setFont('courier', 'normal');
-    doc.text(selectedScan.hash || 'N/A', 20, 137);
+    doc.text(selectedScan.hash || 'N/A', 20, nextY);
+    nextY += 10;
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.text('Forensic Proof Ledger:', 20, 145);
+    doc.text('Forensic Proof Ledger:', 20, nextY);
+    nextY += 5;
     doc.setFont('courier', 'normal');
-    doc.text('Hedera Consensus Service (HCS) - Testnet', 20, 150);
+    doc.text('Polygon Amoy Testnet (EVM)', 20, nextY);
+    nextY += 10;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text('Transaction Hash:', 20, nextY);
+    nextY += 5;
+    doc.setFont('courier', 'normal');
+    const txHash = selectedScan.blockchainTx || 'N/A';
+    doc.text(txHash, 20, nextY);
+    nextY += 15;
 
     // Summary
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text('Investigator Summary:', 20, 165);
+    doc.text('Investigator Summary:', 20, nextY);
+    nextY += 7;
     doc.setFont('helvetica', 'normal');
     const splitMessage = doc.splitTextToSize(message || 'No additional investigator context provided.', 170);
-    doc.text(splitMessage, 20, 172);
+    doc.text(splitMessage, 20, nextY);
+
+    // Verification Statement (pinned to bottom)
+    doc.setTextColor(139, 92, 246);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('BLOCKCHAIN VERIFICATION STATEMENT', 20, 265);
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont('helvetica', 'normal');
+    doc.text('This report is cryptographically verifiable and anchored on the Polygon blockchain. Any modification invalidates this proof.', 20, 270);
 
     // Footer
     doc.setFontSize(8);
@@ -216,21 +257,21 @@ const Reports: React.FC = () => {
               <div className="grid grid-cols-2 gap-8 text-[11px]">
                 <div className="space-y-4">
                   <div>
-                    <p className="font-bold uppercase text-gray-400 mb-1">Verified For</p>
-                    <p className="font-bold text-gray-900">{recipientOrg || '--- Agency Pending ---'}</p>
+                    <p className="font-bold uppercase text-gray-400 mb-1">Target Agency</p>
+                    <p className="font-bold text-gray-900">{recipientOrg || '--- Pending ---'}</p>
                   </div>
                   <div>
-                    <p className="font-bold uppercase text-gray-400 mb-1">Detection Origin</p>
-                    <p className="font-bold text-gray-900">{selectedScan.type.toUpperCase()}</p>
+                    <p className="font-bold uppercase text-gray-400 mb-1">Resource Origin</p>
+                    <p className="font-bold text-gray-900 break-all">{selectedScan.label}</p>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <p className="font-bold uppercase text-gray-400 mb-1">Generation Date</p>
-                    <p className="font-bold text-gray-900">{new Date().toLocaleString()}</p>
+                    <p className="font-bold uppercase text-gray-400 mb-1">Scan Type</p>
+                    <p className="font-bold text-gray-900">{selectedScan.type}</p>
                   </div>
                   <div>
-                    <p className="font-bold uppercase text-gray-400 mb-1">Status</p>
+                    <p className="font-bold uppercase text-gray-400 mb-1">Forensic Status</p>
                     <span className={`px-2 py-0.5 rounded text-[9px] font-black ${selectedScan.status.toLowerCase() === 'safe' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {selectedScan.status.toUpperCase()}
                     </span>
@@ -238,24 +279,42 @@ const Reports: React.FC = () => {
                 </div>
               </div>
 
-              <div className="p-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-                <p className="font-bold uppercase text-gray-400 text-[9px] mb-3">Forensic Evidence Metadata</p>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Shield size={14} className="text-violet-500" />
-                    <p className="text-xs font-medium text-gray-600">Risk Score: <span className="text-gray-900 font-bold">{selectedScan.confidence}</span></p>
+              <div className="p-6 bg-gray-50 rounded-xl border border-dashed border-gray-200 space-y-4">
+                <div>
+                  <p className="font-bold uppercase text-gray-400 text-[9px] mb-2 tracking-widest">Forensic Metadata</p>
+                  <p className="text-xs font-medium text-gray-600">Risk Confidence: <span className="text-gray-900 font-bold">{selectedScan.confidence}</span></p>
+                </div>
+
+                {selectedScan.explanation && selectedScan.explanation.length > 0 && (
+                  <div>
+                    <p className="font-bold uppercase text-gray-400 text-[9px] mb-2 tracking-widest">Analysis Triggers</p>
+                    <div className="space-y-1">
+                      {selectedScan.explanation.slice(0, 2).map((exp, i) => (
+                        <p key={i} className="text-[10px] text-gray-600 leading-tight">• {exp}</p>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Hash size={14} className="text-violet-500" />
-                    <p className="text-[10px] font-mono text-gray-500 break-all">{selectedScan.hash}</p>
+                )}
+
+                <div>
+                  <p className="font-bold uppercase text-gray-400 text-[9px] mb-2 tracking-widest">Blockchain Proof</p>
+                  <div className="space-y-2">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[8px] font-bold text-gray-400">SHA-256 HASH</span>
+                      <p className="font-mono text-[9px] text-gray-500 break-all">{selectedScan.hash}</p>
+                    </div>
+                    <div className="flex flex-col gap-1 p-3 bg-violet-50 rounded-lg border border-violet-100">
+                      <p className="text-[8px] font-black text-violet-600 uppercase tracking-widest">Polygon Transaction</p>
+                      <p className="text-[9px] font-mono text-violet-500 break-all">{selectedScan.blockchainTx || 'Tx Hash Pending...'}</p>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div>
-                <p className="font-bold uppercase text-gray-400 text-[9px] mb-2 tracking-widest">Investigator Context</p>
-                <p className="text-xs text-gray-700 leading-relaxed italic border-l-2 border-violet-200 pl-4 py-1">
-                  "{message || 'No contextual data provided by digital investigator.'}"
+                <p className="font-bold uppercase text-gray-400 text-[9px] mb-2 tracking-widest">Verification Statement</p>
+                <p className="text-[10px] text-violet-600 leading-relaxed font-bold italic border-l-2 border-violet-600 pl-4 py-1">
+                  "This report is cryptographically verifiable and anchored on the Polygon blockchain. Any modification invalidates this proof."
                 </p>
               </div>
 

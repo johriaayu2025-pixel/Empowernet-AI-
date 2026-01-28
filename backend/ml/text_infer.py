@@ -23,9 +23,9 @@ try:
     models['toxic_model'] = AutoModelForSequenceClassification.from_pretrained(MODEL_TOXIC)
     models['toxic_model'].eval()
     
-    print("✅ Text Ensemble Loaded Successfully.")
+    print("SUCCESS: Text Ensemble Loaded Successfully.")
 except Exception as e:
-    print(f"❌ Failed to load text models: {e}")
+    print(f"ERROR: Failed to load text models: {e}")
 
 def get_model_score(text, key_prefix):
     tokenizer = models.get(f'{key_prefix}_tokenizer')
