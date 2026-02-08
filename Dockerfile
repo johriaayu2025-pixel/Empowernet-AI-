@@ -10,6 +10,8 @@ RUN apt-get update && \
     libgl1 \
     libglib2.0-0 \
     ffmpeg \
+    tesseract-ocr \
+    libtesseract-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (from backend folder if context is root)

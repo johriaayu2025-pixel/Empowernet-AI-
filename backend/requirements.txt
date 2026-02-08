@@ -17,3 +17,5 @@ numpy<2.0.0
 web3
 eth-account
 python-dotenv
+pytesseract
+easyocr
