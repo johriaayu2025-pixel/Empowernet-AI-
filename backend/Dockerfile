@@ -4,7 +4,7 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies required for OpenCV, Audio analysis, and Face detection
+# Install system dependencies
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     libgl1 \
@@ -12,19 +12,24 @@ RUN apt-get update && \
     ffmpeg \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first (from backend folder if context is root)
-COPY backend/requirements.txt .
+# Create a non-root user with UID 1000 (Required by Hugging Face)
+RUN useradd -m -u 1000 user
+USER user
+ENV HOME=/home/user \
+    PATH=/home/user/.local/bin:$PATH
+
+# Copy requirements first
+COPY --chown=user requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Copy the rest of the backend code
-COPY backend/ .
+COPY --chown=user . .
 
-# Expose the port Railway will use
-EXPOSE 8001
+# Expose the port Hugging Face uses
+EXPOSE 7860
 
-# Command to run the application
-# We are now already in the directory containing main.py thanks to COPY backend/ .
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8001}"]
+# Command to run the application on port 7860
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
