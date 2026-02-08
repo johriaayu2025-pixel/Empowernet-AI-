@@ -10,6 +10,8 @@ from ml.video_infer import analyze_video_base64
 from ml.video_plus_infer import analyze_video_base64_plus
 from blockchain.blockchain_service import blockchain_service
 
+
+# Force redeploy for Railway config update
 import os
 
 app = FastAPI()
