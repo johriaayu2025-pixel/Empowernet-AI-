@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, ShieldAlert, Mic, Mail, Info, Radio, Zap, AlertTriangle, X } from 'lucide-react';
+import { Bell, ShieldAlert, Mic, Mail, Info, Radio, Zap, AlertTriangle, X, PhoneCall, Globe } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 
 const AlertsCenter: React.FC = () => {
@@ -57,26 +57,48 @@ const AlertsCenter: React.FC = () => {
               </div>
               <h2 className="text-2xl font-black">Emergency Protocol</h2>
             </div>
-            <div className="p-8 space-y-4">
-              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/50 text-red-800 dark:text-red-400 text-sm font-medium flex gap-3">
-                <AlertTriangle className="shrink-0" size={20} />
-                <p>Warning: Use only for actual digital emergencies or imminent threats.</p>
+            <div className="p-8 space-y-6">
+              <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-100 dark:border-red-900/50 text-red-800 dark:text-red-400 text-xs font-bold flex gap-3">
+                <AlertTriangle className="shrink-0" size={18} />
+                <p>DO NOT USE UNLESS FOR AUTHENTIC CYBER EMERGENCIES.</p>
               </div>
-              <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                By confirming, EmpowerNet will:
-              </p>
-              <ul className="text-sm text-gray-500 dark:text-gray-400 space-y-2 list-disc pl-5">
-                <li>Notify emergency contacts via encrypted SMS</li>
-                <li>Generate a tamper-proof forensic snapshot of your current session</li>
-                <li>Lock your account for external verification</li>
-                <li>Notify the relevant Cyber-Security authorities</li>
-              </ul>
-              <div className="flex gap-3 pt-4">
-                <button onClick={() => setShowSOSModal(false)} className="flex-1 py-3 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  Cancel
+
+              <div className="grid grid-cols-1 gap-3">
+                <a href="tel:1930" className="w-full flex items-center justify-center gap-3 py-4 bg-red-600 text-white rounded-2xl font-black text-lg hover:bg-red-700 transition-all shadow-xl shadow-red-200 active:scale-95">
+                  <PhoneCall size={24} /> Call Cyber Helpline: 1930
+                </a>
+                <a href="https://cybercrime.gov.in" target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-3 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl font-black hover:bg-gray-800 dark:hover:bg-gray-100 transition-all active:scale-95">
+                   <Globe size={20} /> Report Online Official
+                </a>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-1">State Cyber Cell Contacts</p>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto pr-2 no-scrollbar">
+                  {[
+                    { city: 'Delhi', phone: '011-25820800' },
+                    { city: 'Mumbai', phone: '022-26300000' },
+                    { city: 'Bangalore', phone: '080-22094498' },
+                    { city: 'Hyderabad', phone: '040-27852079' },
+                    { city: 'Chennai', phone: '044-28512750' }
+                  ].map(c => (
+                    <a key={c.city} href={`tel:${c.phone}`} className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-xl text-[11px] font-bold dark:text-gray-300 hover:border-violet-300 transition-colors">
+                      <p className="text-gray-400 uppercase text-[8px] mb-0.5">{c.city}</p>
+                      {c.phone}
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                <button 
+                  onClick={() => { localStorage.removeItem('auth_token'); window.location.reload(); }}
+                  className="flex-1 py-4 bg-orange-50 text-orange-700 border border-orange-100 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-orange-100 transition-colors"
+                >
+                  Lock My Account
                 </button>
-                <button onClick={executeSOS} className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-lg shadow-red-100 dark:shadow-none transition-all active:scale-95">
-                  Confirm SOS
+                <button onClick={() => setShowSOSModal(false)} className="flex-1 py-4 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-colors">
+                  Close
                 </button>
               </div>
             </div>
@@ -150,9 +172,11 @@ const AlertsCenter: React.FC = () => {
           <p className="text-xs text-red-700 dark:text-red-300 leading-relaxed mb-6">Instantly locks down account, logs critical evidence, and notifies emergency contacts.</p>
           <button
             onClick={() => setShowSOSModal(true)}
-            className="w-full py-4 bg-red-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-red-200 dark:shadow-none hover:bg-red-700 active:scale-95 transition-all animate-pulse"
+            className="w-full py-6 bg-red-600 text-white rounded-2xl font-black flex flex-col items-center justify-center gap-2 shadow-2xl shadow-red-500/30 hover:bg-red-700 active:scale-95 transition-all outline outline-offset-4 outline-red-600/20 group"
           >
-            <Zap size={20} /> Emergency SOS
+            <Zap size={32} className="group-hover:animate-bounce" />
+            <span className="text-xl tracking-tighter uppercase">Emergency SOS</span>
+            <span className="text-[10px] opacity-70 tracking-widest">TAP TO ACTIVATE SHIELD</span>
           </button>
         </div>
       </div>

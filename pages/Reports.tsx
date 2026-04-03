@@ -16,14 +16,19 @@ const Reports: React.FC = () => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [userProfile, setUserProfile] = useState({ name: 'Registered User', email: 'user@empowernet.ai' });
 
-  const organizations = [
-    'Cyber Crime Cell',
-    'State Police',
-    'CERT-In',
-    'Bank Fraud Department',
-    'Social Media Platform',
-    'Other'
+  React.useEffect(() => {
+    const profile = localStorage.getItem('user_profile');
+    if (profile) setUserProfile(JSON.parse(profile));
+  }, []);
+
+  const authorities = [
+    { name: 'National Cyber Crime Reporting Portal (cybercrime.gov.in)', email: 'complaint@cybercrime.gov.in' },
+    { name: 'Delhi Cyber Cell (cybercell.delhi@gov.in)', email: 'cybercell.delhi@gov.in' },
+    { name: 'Mumbai Cyber Crime (cybercell.mumbai@mahapolice.gov.in)', email: 'cybercell.mumbai@mahapolice.gov.in' },
+    { name: 'Bangalore Cyber Crime (cybercrime.blr@ksp.gov.in)', email: 'cybercrime.blr@ksp.gov.in' },
+    { name: 'CERT-In (incident@cert-in.org.in)', email: 'incident@cert-in.org.in' }
   ];
 
   const selectedScan = useMemo(() => {
@@ -34,108 +39,121 @@ const Reports: React.FC = () => {
     if (!selectedScan) return;
 
     const doc = new jsPDF();
-    const timestamp = new Date().toLocaleString();
+    const timestamp = selectedScan.date || new Date().toLocaleString();
+
+    // EmpowerNet logo text at top
+    doc.setTextColor(139, 92, 246); // Violet-600
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('EMPOWERNET AI', 20, 25);
+    doc.setFontSize(10);
+    doc.text('FORENSIC LABORATORY DIVISION', 20, 32);
 
     // Header
-    doc.setFillColor(139, 92, 246); // Violet-600
-    doc.rect(0, 0, 210, 40, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(22);
-    doc.text('EMPOWERNET FORENSIC REPORT', 20, 25);
-    doc.setFontSize(10);
-    doc.text('OFFICIAL DIGITAL EVIDENCE DOSSIER', 20, 32);
-
-    // Metadata
     doc.setTextColor(50, 50, 50);
-    doc.setFontSize(12);
+    doc.setFontSize(14);
+    doc.text('COMPLAINT UNDER SECTION 66 OF IT ACT 2000 / BNS 2023', 105, 50, { align: 'center' });
+    
+    // To Section
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text('Report Details', 20, 55);
+    doc.text('To,', 20, 65);
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text(`Generated: ${timestamp}`, 20, 62);
-    doc.text(`Target Agency: ${recipientOrg}`, 20, 67);
+    const auth = authorities.find(a => a.name === recipientOrg);
+    doc.text(auth ? auth.name.split(' (')[0] : recipientOrg, 20, 72);
 
-    // Scan Info
-    doc.line(20, 75, 190, 75);
+    // Complainant section
     doc.setFont('helvetica', 'bold');
-    doc.text('Scan Information', 20, 85);
+    doc.text('1. Complainant Details', 20, 85);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Resource Origin: ${selectedScan.label}`, 20, 95);
-    doc.text(`Scan Type: ${selectedScan.type}`, 20, 102);
-    doc.text(`Risk Category: ${selectedScan.status.toUpperCase()}`, 20, 109);
-    doc.text(`Confidence: ${selectedScan.confidence}`, 20, 116);
+    doc.text(`Name: Registered User`, 20, 92);
+    doc.text(`Platform: EmpowerNet AI Security System`, 20, 99);
 
-    // Analysis Triggers
-    let nextY = 125;
-    if (selectedScan.explanation && selectedScan.explanation.length > 0) {
-      doc.setFont('helvetica', 'bold');
-      doc.text('Forensic Analysis Triggers:', 20, 128);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      selectedScan.explanation.slice(0, 3).forEach((trigger, i) => {
-        const splitText = doc.splitTextToSize(`• ${trigger}`, 170);
-        doc.text(splitText, 25, 135 + (i * 7));
-        nextY = 135 + (i * 7) + 10;
-      });
-      doc.setFontSize(10);
+    // Incident details section
+    doc.setFont('helvetica', 'bold');
+    doc.text('2. Incident Details', 20, 112);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Evidence Type: ${selectedScan.type.toUpperCase()}`, 20, 119);
+    doc.text(`Timestamp: ${timestamp}`, 20, 126);
+    
+    const labelLines = doc.splitTextToSize(`Content Description: ${selectedScan.label}`, 170);
+    doc.text(labelLines, 20, 133);
+    
+    let nextY = 133 + (labelLines.length * 7);
+
+    if (message) {
+        const msgLines = doc.splitTextToSize(`Context: ${message}`, 170);
+        doc.text(msgLines, 20, nextY);
+        nextY += (msgLines.length * 7);
     }
+    nextY += 5;
 
-    // Cryptographic Evidence
-    doc.line(20, nextY, 190, nextY);
-    nextY += 10;
+    // Technical evidence section
     doc.setFont('helvetica', 'bold');
-    doc.text('Cryptographic Proof', 20, nextY);
-    nextY += 10;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text('Evidence Hash (SHA-256):', 20, nextY);
-    nextY += 5;
-    doc.setFont('courier', 'normal');
-    doc.text(selectedScan.hash || 'N/A', 20, nextY);
-    nextY += 10;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text('Forensic Proof Ledger:', 20, nextY);
-    nextY += 5;
-    doc.setFont('courier', 'normal');
-    doc.text('Polygon Amoy Testnet (EVM)', 20, nextY);
-    nextY += 10;
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.text('Transaction Hash:', 20, nextY);
-    nextY += 5;
-    doc.setFont('courier', 'normal');
-    const txHash = selectedScan.blockchainTx || 'N/A';
-    doc.text(txHash, 20, nextY);
-    nextY += 15;
-
-    // Summary
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text('Investigator Summary:', 20, nextY);
+    doc.text('3. Technical Evidence Section', 20, nextY);
     nextY += 7;
     doc.setFont('helvetica', 'normal');
-    const splitMessage = doc.splitTextToSize(message || 'No additional investigator context provided.', 170);
-    doc.text(splitMessage, 20, nextY);
-
-    // Verification Statement (pinned to bottom)
-    doc.setTextColor(139, 92, 246);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text('BLOCKCHAIN VERIFICATION STATEMENT', 20, 265);
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
+    doc.text(`Deepfake Probability / Confidence: ${selectedScan.confidence}`, 20, nextY);
+    nextY += 7;
+    doc.text(`Detection Model Used: EmpowerNet Advanced Synthetic DNA Scanner`, 20, nextY);
+    nextY += 7;
+    doc.text(`Ledger Anchored: Polygon Amoy Testnet (EVM)`, 20, nextY);
+    nextY += 7;
+    
+    const hashLines = doc.splitTextToSize(`Blockchain Hash (Evidence Match): ${selectedScan.hash || 'N/A'}`, 170);
+    doc.setFont('courier', 'normal');
+    doc.text(hashLines, 20, nextY);
+    nextY += (hashLines.length * 7);
+    
     doc.setFont('helvetica', 'normal');
-    doc.text('This report is cryptographically verifiable and anchored on the Polygon blockchain. Any modification invalidates this proof.', 20, 270);
+    const txLines = doc.splitTextToSize(`Transaction Hash: ${selectedScan.blockchainTx || 'N/A'}`, 170);
+    doc.setFont('courier', 'normal');
+    doc.text(txLines, 20, nextY);
+    nextY += (txLines.length * 7) + 5;
+
+    // Declaration
+    doc.setFont('helvetica', 'bold');
+    doc.text('4. Declaration', 20, nextY);
+    nextY += 7;
+    doc.setFont('helvetica', 'italic');
+    doc.text('"I hereby declare that the information given above is true and correct', 20, nextY);
+    nextY += 7;
+    doc.text('to the best of my knowledge."', 20, nextY);
 
     // Footer
-    doc.setFontSize(8);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
     doc.setTextColor(150, 150, 150);
-    doc.text('This document is a machine-generated forensic report by EmpowerNet AI.', 105, 280, { align: 'center' });
+    doc.text(`Generated by EmpowerNet AI Forensics Platform | Evidence Hash: ${selectedScan.hash || 'N/A'}`, 105, 280, { align: 'center' });
 
-    doc.save(`EmpowerNet_Report_${selectedScan.id}.pdf`);
+    doc.save(`CyberCrime_Complaint_${selectedScan.id}.pdf`);
+  };
+
+  const handleEmailReport = () => {
+    if (!selectedScan || !recipientOrg) return;
+    const auth = authorities.find(a => a.name === recipientOrg);
+    if (!auth || !auth.email) return;
+
+    const subject = `Cyber Crime Complaint - ${selectedScan.type.toUpperCase()} - ${selectedScan.date}`;
+    const body = `Respected Sir/Madam,
+
+I am writing to formally report an incident of ${selectedScan.type} encountered on ${selectedScan.date}.
+
+Evidence Details:
+- Evidence Type: ${selectedScan.type.toUpperCase()}
+- Content Description: ${selectedScan.label}
+- Confidence Score: ${selectedScan.confidence}
+- Blockchain Proof Hash: ${selectedScan.hash || 'N/A'}
+- Additional Context: ${message || 'None provided'}
+
+I have attached the auto-generated EmpowerNet Forensic Report (PDF) to this email. Please review the cryptographic evidence for further investigation.
+
+I hereby declare that the information given above is true and correct to the best of my knowledge.
+
+Regards,
+[Your Name]`;
+
+    window.location.href = `mailto:${auth.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -198,8 +216,8 @@ const Reports: React.FC = () => {
                 className="w-full p-4 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-700 rounded-xl appearance-none font-medium text-gray-700 dark:text-gray-200"
               >
                 <option value="">-- Select Authority --</option>
-                {organizations.map(org => (
-                  <option key={org} value={org}>{org}</option>
+                {authorities.map(org => (
+                  <option key={org.name} value={org.name}>{org.name}</option>
                 ))}
               </select>
               <Building2 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={18} />
@@ -223,16 +241,36 @@ const Reports: React.FC = () => {
               type="button"
               onClick={generatePDF}
               disabled={!selectedScanId}
-              className="flex items-center justify-center gap-2 py-4 border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              className="flex items-center justify-center gap-2 py-3 border-2 border-gray-100 dark:border-gray-700 rounded-xl font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
             >
               <Download size={20} /> Download PDF
             </button>
             <button
-              type="submit"
-              disabled={!selectedScanId || isSubmitting}
-              className="flex items-center justify-center gap-2 py-4 bg-violet-600 text-white rounded-xl font-bold shadow-lg shadow-violet-100 hover:bg-violet-700 active:scale-95 transition-all disabled:opacity-50"
+              type="button"
+              onClick={handleEmailReport}
+              disabled={!selectedScanId || !recipientOrg}
+              className="flex items-center justify-center gap-2 py-3 border-2 border-violet-100 dark:border-violet-900/30 text-violet-600 dark:text-violet-400 rounded-xl font-bold hover:bg-violet-50 dark:hover:bg-violet-900/20 disabled:opacity-50 transition-colors"
             >
-              {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><Send size={20} /> Submit Report</>}
+              <Mail size={20} /> Send Report via Email
+            </button>
+          </div>
+
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedScanId) {
+                  generatePDF();
+                  setTimeout(() => {
+                    window.open('https://cybercrime.gov.in/Webform/accept.aspx', '_blank');
+                  }, 500);
+                }
+              }}
+              disabled={!selectedScanId}
+              title="Your PDF report will be downloaded. Attach it to the form that opens."
+              className="w-full flex items-center justify-center gap-2 py-4 bg-violet-600 text-white rounded-xl font-bold shadow-lg shadow-violet-100 dark:shadow-none hover:bg-violet-700 active:scale-95 transition-all disabled:opacity-50"
+            >
+              <Shield size={20} /> Submit to cybercrime.gov.in
             </button>
           </div>
         </form>
@@ -249,33 +287,53 @@ const Reports: React.FC = () => {
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400">Forensic Laboratory Division</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-bold text-gray-400 mb-1 leading-none uppercase">Report ID</p>
-                  <p className="font-mono text-sm font-bold text-gray-900">EV-2025-{selectedScan.id.slice(-4).toUpperCase()}</p>
+                  <p className="text-[10px] font-bold text-gray-400 mb-1 leading-none uppercase">Forensic Case ID</p>
+                  <p className="font-mono text-xs font-bold text-gray-900">EV-2025-{selectedScan.id.slice(-8).toUpperCase()}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-8 text-[11px]">
+              <div className="grid grid-cols-2 gap-8 text-[11px] border-b border-gray-100 pb-6">
                 <div className="space-y-4">
                   <div>
-                    <p className="font-bold uppercase text-gray-400 mb-1">Target Agency</p>
-                    <p className="font-bold text-gray-900">{recipientOrg || '--- Pending ---'}</p>
+                    <p className="font-bold uppercase text-gray-400 mb-1 tracking-widest">Complainant Details</p>
+                    <p className="font-bold text-gray-900 text-sm">{userProfile.name}</p>
+                    <p className="text-gray-500">{userProfile.email}</p>
                   </div>
                   <div>
-                    <p className="font-bold uppercase text-gray-400 mb-1">Resource Origin</p>
-                    <p className="font-bold text-gray-900 break-all">{selectedScan.label}</p>
+                    <p className="font-bold uppercase text-gray-400 mb-1 tracking-widest">Reporting To</p>
+                    <p className="font-bold text-violet-600">{recipientOrg || 'Selection Pending'}</p>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div>
-                    <p className="font-bold uppercase text-gray-400 mb-1">Scan Type</p>
-                    <p className="font-bold text-gray-900">{selectedScan.type}</p>
+                    <p className="font-bold uppercase text-gray-400 mb-1 tracking-widest">Incident Timestamp</p>
+                    <p className="font-bold text-gray-900">{selectedScan.date || new Date().toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="font-bold uppercase text-gray-400 mb-1">Forensic Status</p>
-                    <span className={`px-2 py-0.5 rounded text-[9px] font-black ${selectedScan.status.toLowerCase() === 'safe' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {selectedScan.status.toUpperCase()}
-                    </span>
+                    <p className="font-bold uppercase text-gray-400 mb-1 tracking-widest">Verification Status</p>
+                    <div className="flex items-center gap-2">
+                       <ShieldCheck size={14} className="text-green-600" />
+                       <span className="font-black text-green-600 uppercase">Cryptographically Secured</span>
+                    </div>
                   </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center bg-gray-900 text-white p-4 rounded-xl">
+                   <div>
+                     <p className="text-[9px] font-bold opacity-60 uppercase tracking-widest">Detected Incident Type</p>
+                     <p className="text-lg font-black">{selectedScan.type.toUpperCase()}</p>
+                   </div>
+                   <div className="text-right">
+                     <p className="text-[9px] font-bold opacity-60 uppercase tracking-widest">AI Confidence</p>
+                     <p className="text-xl font-black text-violet-400">{selectedScan.confidence}</p>
+                   </div>
+                </div>
+                
+                <div className="p-4 bg-violet-50 rounded-xl border border-violet-100">
+                   <p className="text-[9px] font-black text-violet-800 uppercase tracking-widest mb-1">Evidence Source / Label</p>
+                   <p className="text-xs font-bold text-gray-800 line-clamp-2">{selectedScan.label}</p>
                 </div>
               </div>
 

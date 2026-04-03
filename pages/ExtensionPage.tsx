@@ -43,16 +43,20 @@ const ExtensionPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { icon: <Globe />, title: 'Fraud Blocking', desc: 'Auto-blocks known scam and phishing domains.' },
-          { icon: <Monitor />, title: 'Page Scanning', desc: 'Deep scans page text for linguistic fraud patterns.' },
-          { icon: <ShieldCheck />, title: 'Real-time Alerts', desc: 'Warns you before you click a suspicious link.' },
-          { icon: <Bell />, title: 'Live Meeting Scan', desc: 'Detects synthetic voice cloning in live calls.' },
+          { icon: <Monitor />, title: 'Real-time Page Scanning', desc: 'Instant risk score analysis for any website you visit.' },
+          { icon: <Download />, title: 'Media Analysis', desc: 'Upload images, audio, or video for forensic AI deepfake detection.' },
+          { icon: <Globe />, title: 'Malicious Site Blocking', desc: 'Automatically prevent access to known phishing and scam domains.' },
+          { icon: <Bell />, title: 'Live Meeting Protection', desc: 'Detects deepfakes and AI voices during Google Meet and Zoom calls.' },
+          { icon: <Zap />, title: 'Social Media Scanner', desc: 'Automatically labels AI-generated content on Instagram and YouTube.' },
+          { icon: <Lock />, title: 'Child Safety Mode', desc: 'Automatically hides cyberbullying and explicit content from any page.' },
+          { icon: <ShieldCheck />, title: 'Fake News Detection', desc: 'Flags manipulative and biased content while you browse.' },
+          { icon: <History />, title: 'Evidence Auto-Sync', desc: 'Saves all detected threats to your local forensic log instantly.' },
         ].map((item, i) => (
           <div key={i} className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-all">
             <div className="w-10 h-10 bg-violet-50 dark:bg-violet-900/30 rounded-lg flex items-center justify-center text-violet-600 dark:text-violet-400 mb-4">
               {item.icon}
             </div>
-            <h3 className="font-bold text-gray-900 dark:text-white mb-2">{item.title}</h3>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-2 leading-tight">{item.title}</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{item.desc}</p>
           </div>
         ))}

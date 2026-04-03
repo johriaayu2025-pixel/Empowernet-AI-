@@ -19,3 +19,9 @@ eth-account
 python-dotenv
 pytesseract
 easyocr
+mediapipe
+redis
+onnxruntime
+websockets
+torchaudio
+openai

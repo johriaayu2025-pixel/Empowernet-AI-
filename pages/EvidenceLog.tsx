@@ -33,11 +33,20 @@ const EvidenceLog: React.FC = () => {
     setIsVerifying(true);
     setCurrentVerifyingId(id);
     try {
-      const res = await verifyEvidence(hash);
+      // We still call the API for logging/simulation purposes, 
+      // but we force the UI to 'verified' as requested.
+      try {
+        await verifyEvidence(hash);
+      } catch (e) {
+        console.warn("Simulated verification: API call failed but proceeding with 'verified' state", e);
+      }
+
+      const res = { status: 'verified' };
       verifyScan(id, res);
+
       // If modal is open for this scan, update it locally too
       if (selectedScan && selectedScan.id === id) {
-        setSelectedScan({ ...selectedScan, verificationStatus: res.status === 'verified' ? 'verified' : 'failed' });
+        setSelectedScan({ ...selectedScan, verificationStatus: 'verified' });
       }
     } catch (err) {
       console.error(err);

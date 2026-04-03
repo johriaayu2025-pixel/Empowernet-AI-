@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { ShieldAlert, Mail, Lock, ArrowRight, UserPlus } from 'lucide-react';
 
-const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+const LoginPage: React.FC<{ onLogin: () => void; onLogoClick?: () => void }> = ({ onLogin, onLogoClick }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,13 +42,16 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6 font-sans">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-gray-100">
-        <div className="flex flex-col items-center mb-10">
-          <div className="w-16 h-16 bg-violet-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-violet-200">
+        <div className="flex flex-col items-center mb-10 translate-y-0 hover:-translate-y-1 transition-transform">
+          <div 
+            onClick={onLogoClick}
+            className="w-16 h-16 bg-violet-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-violet-200 cursor-pointer hover:scale-105 active:scale-95 transition-all"
+          >
             <ShieldAlert className="text-white" size={32} />
           </div>
-          <h1 className="text-3xl font-black text-violet-900">EmpowerNet</h1>
+          <h1 className="text-3xl font-black text-violet-900 cursor-pointer" onClick={onLogoClick}>EmpowerNet</h1>
           <p className="text-gray-500 font-medium">
             {isLogin ? 'Secure access to AI Scam Detection' : 'Create your secure account'}
           </p>

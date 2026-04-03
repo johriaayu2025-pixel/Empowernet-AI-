@@ -15,12 +15,13 @@ import {
   Chrome,
   Settings,
   Moon,
-  Sun
+  Sun,
+  Radar
 } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import ScanPage from './pages/ScanPage';
 import DeepfakeDetection from './pages/DeepfakeDetection';
-import AlertsCenter from './pages/AlertsCenter';
+import ThreatIntelligence from './pages/ThreatIntelligence';
 import HistoryAnalytics from './pages/HistoryAnalytics';
 import EvidenceLog from './pages/EvidenceLog';
 import Reports from './pages/Reports';
@@ -28,13 +29,14 @@ import Premium from './pages/Premium';
 import LoginPage from './pages/LoginPage';
 import ExtensionPage from './pages/ExtensionPage';
 import SettingsPage from './pages/SettingsPage';
+import LandingPage from './pages/LandingPage';
 import { useAppStore } from './store/useAppStore';
 
-type Page = 'dashboard' | 'scan' | 'deepfake' | 'alerts' | 'evidence' | 'reports' | 'history' | 'premium' | 'extension' | 'settings';
+type Page = 'landing' | 'login' | 'dashboard' | 'scan' | 'deepfake' | 'threats' | 'evidence' | 'reports' | 'history' | 'premium' | 'extension' | 'settings';
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
+  const [currentPage, setCurrentPage] = useState<Page>('landing');
   const { theme, setTheme } = useAppStore();
 
   const toggleTheme = () => {
@@ -46,8 +48,17 @@ const App: React.FC = () => {
   useEffect(() => {
     hydrate();
     const token = localStorage.getItem('auth_token');
-    if (token) setIsLoggedIn(true);
-  }, [hydrate]);
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []); // Run ONLY once on mount
+
+  // Optional: Redirect to dashboard IF and ONLY IF they just logged in or just loaded the app at '/'
+  useEffect(() => {
+    if (isLoggedIn && (currentPage === 'login')) {
+      setCurrentPage('dashboard');
+    }
+  }, [isLoggedIn, currentPage]);
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
@@ -55,7 +66,37 @@ const App: React.FC = () => {
   };
 
   if (!isLoggedIn) {
-    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+    if (currentPage === 'login' || (currentPage !== 'landing' && currentPage !== 'extension')) {
+      return <LoginPage onLogoClick={() => setCurrentPage('landing')} onLogin={() => {
+        setIsLoggedIn(true);
+        setCurrentPage('dashboard');
+      }} />;
+    }
+    
+    if (currentPage === 'extension') {
+      return (
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+           <nav className="p-6 flex justify-between items-center max-w-7xl mx-auto">
+             <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentPage('landing')}>
+               <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
+                 <ShieldAlert className="text-white" size={20} />
+               </div>
+               <h1 className="font-bold text-lg text-violet-900 dark:text-violet-400">EmpowerNet</h1>
+             </div>
+             <button onClick={() => setCurrentPage('login')} className="px-6 py-2 bg-violet-600 text-white rounded-lg font-bold">Sign In</button>
+           </nav>
+           <div className="p-8"><ExtensionPage /></div>
+        </div>
+      );
+    }
+
+    return (
+      <LandingPage 
+        onLoginClick={() => setCurrentPage('login')} 
+        onDashboardClick={() => setCurrentPage('dashboard')}
+        onExtensionClick={() => setCurrentPage('extension')}
+      />
+    );
   }
 
   const renderPage = () => {
@@ -63,7 +104,7 @@ const App: React.FC = () => {
       case 'dashboard': return <Dashboard setCurrentPage={setCurrentPage} />;
       case 'scan': return <ScanPage />;
       case 'deepfake': return <DeepfakeDetection />;
-      case 'alerts': return <AlertsCenter />;
+      case 'threats': return <ThreatIntelligence setCurrentPage={setCurrentPage} />;
       case 'history': return <HistoryAnalytics />;
       case 'evidence': return <EvidenceLog />;
       case 'reports': return <Reports />;
@@ -78,7 +119,7 @@ const App: React.FC = () => {
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { id: 'scan', label: 'Scan', icon: <Scan size={20} /> },
     { id: 'deepfake', label: 'Deepfake Detection', icon: <ShieldAlert size={20} /> },
-    { id: 'alerts', label: 'Alerts', icon: <Bell size={20} /> },
+    { id: 'threats', label: 'Threat Intelligence', icon: <Radar size={20} /> },
     { id: 'extension', label: 'Chrome Extension', icon: <Chrome size={20} /> },
     { id: 'evidence', label: 'Evidence Log', icon: <FileText size={20} /> },
     { id: 'reports', label: 'Reports', icon: <Flag size={20} /> },
@@ -91,8 +132,8 @@ const App: React.FC = () => {
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <aside className="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col fixed h-full z-10 transition-colors">
         <div className="p-6">
-          <div className="flex items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center">
+          <div className="flex items-center gap-2 mb-8 cursor-pointer group" onClick={() => setCurrentPage('landing')}>
+            <div className="w-8 h-8 bg-violet-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
               <ShieldAlert className="text-white" size={20} />
             </div>
             <div>
@@ -145,7 +186,7 @@ const App: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
             <div className="text-xs font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700">Last synced: Just now</div>
-            <button className="p-2 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors" onClick={() => setCurrentPage('alerts')}><Bell size={20} /></button>
+            <button className="p-2 text-gray-400 hover:text-violet-600 dark:hover:text-violet-400 transition-colors" onClick={() => setCurrentPage('threats')}><Bell size={20} /></button>
           </div>
         </header>
         <div className="max-w-7xl mx-auto">{renderPage()}</div>

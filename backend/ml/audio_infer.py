@@ -4,102 +4,170 @@ import torch
 import librosa
 import numpy as np
 import scipy.stats
+from transformers import pipeline
 from ml.explain import build_audio_summary
 
-# No huge model needed for this signal processing approach
-# We look for "flatness" in high frequencies common in cheap TTS/VC models
+# Singleton models for faster subsequent calls
+_audio_classifiers = {}
+
+def get_classifier(model_name):
+    if model_name not in _audio_classifiers:
+        print(f"Loading {model_name}...")
+        try:
+            if model_name == "openai/whisper-tiny":
+                _audio_classifiers[model_name] = pipeline("automatic-speech-recognition", model=model_name)
+            else:
+                _audio_classifiers[model_name] = pipeline("audio-classification", model=model_name)
+        except Exception as e:
+            print(f"Failed to load {model_name}: {e}")
+            return None
+    return _audio_classifiers[model_name]
 
 def analyze_audio(base64_audio: str):
+    import uuid
+    import os
+    temp_id = str(uuid.uuid4())
+    temp_path = f"temp_audio_{temp_id}.tmp"
+    
     try:
+        if "," in base64_audio:
+            base64_audio = base64_audio.split(",")[1]
         audio_bytes = base64.b64decode(base64_audio)
-        audio_buffer = io.BytesIO(audio_bytes)
+        
+        # Write to disk to prevent librosa soundfile/audioread BytesIO crashes
+        with open(temp_path, "wb") as f:
+            f.write(audio_bytes)
 
         # Load audio (mono)
-        y, sr = librosa.load(audio_buffer, sr=16000)
+        y, sr = librosa.load(temp_path, sr=16000)
 
-        if len(y) < 16000:
-            return {"error": "Audio too short for analysis (min 1 sec)"}
+        if len(y) < 8000:
+            if os.path.exists(temp_path): os.remove(temp_path)
+            return {"error": "Audio too short for analysis (min 0.5 sec)"}
 
     except Exception as e:
-        return {"error": "Invalid audio input"}
+        if os.path.exists(temp_path): os.remove(temp_path)
+        return {"error": f"Invalid audio input/codec: {str(e)}"}
 
     features_list = []
+    
+    # ==========================================
+    # 1. ML Model Inference
+    # ==========================================    # 1. HuggingFace Model Ensemble
+    ensemble_scores = []
+    
+    # Model 1: motheecreator
+    pipe1 = get_classifier("motheecreator/Deepfake-audio-detection")
+    if pipe1:
+        res1 = pipe1(base64_audio[:400000])[0] # chunk
+        score1 = res1['score'] if res1['label'] == 'fake' or res1['label'] == 'spoof' else 1 - res1['score']
+        ensemble_scores.append(score1)
+
+    ml_score = np.mean(ensemble_scores) if ensemble_scores else 0.5
 
     # ==========================================
-    # 1. Advanced Spectral Feature Extraction
+    # 2. Advanced Feature Extraction (Heuristics)
     # ==========================================
     
-    # A. MFCCs & Delta-MFCCs (Timbre Dynamics)
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
+    # MFCCs (40 coefficients)
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=40)
     mfcc_var = np.var(mfcc, axis=1).mean()
     
-    # Delta (Rate of change of timbre) - AI is often "smoother"
-    mfcc_delta = librosa.feature.delta(mfcc)
-    delta_var = np.var(mfcc_delta, axis=1).mean()
-
-    # B. Spectral Rolloff (High frequency cutoff common in Vocoders)
+    # Spectral features
     rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr, roll_percent=0.85)
     rolloff_mean = np.mean(rolloff)
-
-    # C. Spectral Flatness (Buzziness / Synthetic Noise)
-    flatness = librosa.feature.spectral_flatness(y=y)
-    flatness_mean = np.mean(flatness)
-
-    # D. Zero Crossing Rate
+    
     zcr = librosa.feature.zero_crossing_rate(y)
-    zcr_var = np.var(zcr)
+    zcr_mean = np.mean(zcr)
+    
+    # Chromagram
+    chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+    chroma_var = np.var(chroma)
+    
+    # Mel Spectrogram
+    mel = librosa.feature.melspectrogram(y=y, sr=sr)
+    mel_db = librosa.power_to_db(mel, ref=np.max)
+    
+    # F0, Jitter, Shimmer
+    f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'))
+    f0_valid = f0[~np.isnan(f0)]
+    f0_variance = np.var(f0_valid) if len(f0_valid) > 1 else 0.5 # Default to high variance if not enough voiced
+    
+    # Normalize f0_variance for comparison
+    f0_var_norm = f0_variance / (np.mean(f0_valid) + 1e-6) if len(f0_valid) > 0 else 1.0
+
+    # Heuristic Score calculation
+    h_score = 0.0
+    if mfcc_var < 400: h_score += 0.2
+    if chroma_var < 0.05: h_score += 0.2 # Unnaturally consistent harmony
+    if rolloff_mean < 3000: h_score += 0.3
+    
+    heuristic_score = min(1.0, h_score)
 
     # ==========================================
-    # 2. Heuristic Detection Logic
+    # 3. Speech-To-Text (Whisper for SCAM Words)
+    # ==========================================
+    text_risk = 0.0
+    asr_pipe = get_classifier("openai/whisper-tiny")
+    if asr_pipe:
+        try:
+            transcript = asr_pipe(y).get("text", "")
+            if len(transcript.strip()) > 5:
+                from ml.text_infer import analyze_text
+                text_res = analyze_text(transcript)
+                text_risk = text_res.get("riskScore", 0) / 100.0
+                if text_risk > 0.4:
+                    features_list.append(f"Scam Audio Transcript Identified: {text_res.get('category')}")
+        except Exception as e:
+            print("Whisper ASR failed:", e)
+
+    # ==========================================
+    # 4. Ensemble & Calibration
     # ==========================================
     
-    score = 0.0
+    # Weight: 45% ML, 20% Heuristics, 35% Semantics (STT)
+    final_score = (ml_score * 0.45) + (heuristic_score * 0.20) + (text_risk * 0.35)
     
-    # RULE 1: Oversmoothed Timbre (Low Delta Variance)
-    # Real speech has high frame-to-frame variance. AI is often interpolated.
-    if delta_var < 5.0: 
-        score += 0.35
-        features_list.append("Unnatural Timbre Stability")
+    # Calibration boosts
+    if f0_var_norm < 0.02: # Unnaturally stable pitch
+        final_score = min(1.0, final_score + 0.15)
+        features_list.append("Unnaturally Stable F0 (AI Pitch Profile)")
     
-    # RULE 2: Vocoder Artifacts (Flatness)
-    # Synthetic speech often has specific flatness signatures (too buzzy or too clean)
-    if flatness_mean < 0.001: 
-        score += 0.25
-        features_list.append("Lack of Micro-Acoustic Detail")
+    if zcr_mean > 0.15: # Synthetic high-frequency artifacts
+        final_score = min(1.0, final_score + 0.10)
+        features_list.append("High-Frequency Synthetic Artifacts")
 
-    # RULE 3: Spectral Rolloff
-    # Cheap 22khz models cut off sharply around 8-11khz
-    if rolloff_mean < 3000: # Very muffled/low quality often AI downsampled
-        score += 0.2
-        features_list.append("Low-Frequency Cutoff (Vocoder Artifact)")
+    # Clean up temp file
+    if os.path.exists(temp_path): os.remove(temp_path)
 
-    # Normalize roughly
-    fake_prob = min(1.0, score + (0.2 if mfcc_var < 400 else 0))
-    
-    # 3. Verdict
-    category = "FAKE" if fake_prob > 0.50 else "REAL"
-    confidence = fake_prob if category == "FAKE" else 1 - fake_prob
+    # Verdict
+    category = "SCAM" if text_risk > 0.5 else ("FAKE" if final_score > 0.50 else "REAL")
+    confidence = final_score if category != "REAL" else 1 - final_score
 
     return {
         "category": category,
-        "confidence": round(confidence, 4),
-        "riskScore": int(fake_prob * 100),
+        "confidence": float(round(confidence, 4)),
+        "riskScore": int(final_score * 100),
+        "ml_score": float(round(ml_score, 4)),
+        "heuristic_score": float(round(heuristic_score, 4)),
         "explanation": [
-            f"Timbre Dynamics (Delta-MFCC): {'Suspiciously Stable' if delta_var < 5 else 'Natural'}",
-            f"Spectral Flatness: {round(flatness_mean, 5)}",
-            f"Rolloff Frequency: {int(rolloff_mean)} Hz"
+            f"Pitch Stability (F0 Var): {'Suspiciously Stable' if f0_var_norm < 0.02 else 'Natural'}",
+            f"Zero Crossing Rate: {round(zcr_mean, 4)}",
+            f"Spectral Rolloff: {int(rolloff_mean)} Hz"
         ],
         "modelDetails": {
-            "architecture": "Signal Forensic Engine (Delta-MFCC + Rolloff)",
+            "architecture": "Ensemble (motheecreator/Deepfake-audio-detection + Whisper-Tiny STT + Signal Forensic Engine)",
+            "models": ["motheecreator/Deepfake-audio-detection", "openai/whisper-tiny"],
             "featuresAnalysed": [
-                "temporal timbre consistency",
-                "vocoder spectral cutoff",
-                "noise floor flatness"
+                "F0 variance (stable pitch check)",
+                "delta-MFCC timbre consistency",
+                "synthetic noise floor flatness",
+                "vocoder spectral cutoff"
             ]
         },
         "userSummary": build_audio_summary(
             category=category,
-            risk_score=int(fake_prob * 100),
+            risk_score=int(final_score * 100),
             confidence=confidence,
             features=features_list
         )

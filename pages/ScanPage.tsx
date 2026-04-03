@@ -40,7 +40,7 @@ const ScanPage: React.FC = () => {
 
   const tabs = [
     { id: 'text', label: 'Text', icon: <MessageSquare size={16} />, accept: '' },
-    { id: 'image', label: 'Image', icon: <ImageIcon size={16} />, accept: 'image/jpeg,image/png' },
+    { id: 'image', label: 'Image', icon: <ImageIcon size={16} />, accept: 'image/jpeg,image/png,image/webp' },
     { id: 'video', label: 'Video', icon: <Video size={16} />, accept: 'video/mp4,video/quicktime' },
     { id: 'audio', label: 'Audio', icon: <Mic size={16} />, accept: 'audio/mpeg,audio/wav' },
   ];

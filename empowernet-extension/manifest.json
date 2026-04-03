@@ -8,10 +8,19 @@
         "scripting",
         "contextMenus",
         "storage",
-        "webNavigation"
+        "webNavigation",
+        "audio",
+        "tabs",
+        "tabCapture",
+        "offscreen"
     ],
     "host_permissions": [
-        "http://localhost:8001/*"
+        "http://localhost:8001/*",
+        "https://meet.google.com/*",
+        "https://*.zoom.us/*",
+        "https://web.whatsapp.com/*",
+        "https://*.instagram.com/*",
+        "https://*.youtube.com/*"
     ],
     "action": {
         "default_popup": "popup.html",
@@ -31,7 +40,31 @@
                 "<all_urls>"
             ],
             "js": [
-                "content.js"
+                "content.js",
+                "child_safety.js"
+            ],
+            "run_at": "document_idle"
+        },
+        {
+            "matches": [
+                "https://meet.google.com/*",
+                "https://*.zoom.us/*",
+                "https://web.whatsapp.com/*"
+            ],
+            "js": [
+                "meeting_content.js"
+            ],
+            "run_at": "document_idle"
+        },
+        {
+            "matches": [
+                "https://*.instagram.com/*",
+                "https://instagram.com/*",
+                "https://*.youtube.com/*",
+                "https://youtube.com/*"
+            ],
+            "js": [
+                "media_scanner.js"
             ],
             "run_at": "document_idle"
         }

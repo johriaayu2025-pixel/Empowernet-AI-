@@ -17,19 +17,46 @@ SCAM_PATTERNS = [
     r"password",
     r"crypto",
     r"wallet",
-    r"pay immediately"
+    r"pay immediately",
+    r"scamlink",
+    r"free-iphone",
+    r"claim your prize"
+]
+
+SAFE_DOMAINS = [
+    r"onlinesbi\.sbi",
+    r"delhivery\.com",
+    r"parivahan\.gov\.in",
+    r"google\.com",
+    r"linkedin\.com",
+    r"netflix\.com",
+    r"amazon\.in",
+    r"amazon\.com",
+    r"icicibank\.com",
+    r"hdfcbank\.com",
+    r"apple\.com",
+    r"microsoft\.com",
+    r"instagram\.com",
+    r"facebook\.com"
 ]
 
 def apply_risk_boosters(text: str) -> float:
     """
-    Returns a risk boost between 0.0 and 0.4
+    Returns a risk boost between -1.0 and 0.8
     """
     text = text.lower()
-    boost = 0.0
+    
+    # 1. Whitelist Safe Domains Verification
+    for domain in SAFE_DOMAINS:
+        if re.search(domain, text):
+            return -1.0 # Force SAFE
 
+    # 2. Heuristic Check
+    boost = 0.0
     for pattern in SCAM_PATTERNS:
         if re.search(pattern, text):
-            boost += 0.05
+            # Much stronger boost to replace the cybersectony NLP model
+            boost += 0.35 if len(text.split()) < 4 else 0.20
 
-    # Cap boost (VERY IMPORTANT)
-    return min(boost, 0.4)
+    # Cap boost
+    return min(boost, 0.80)

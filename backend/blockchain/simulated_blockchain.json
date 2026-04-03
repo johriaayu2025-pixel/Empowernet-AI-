@@ -1,0 +1,240 @@
+{
+    "6700ee03af8cdc6fe914960b5974ed2bee3a008bb77679bb656f98755947bfce": {
+        "exists": true,
+        "timestamp": 1774680159,
+        "category": "SAFE",
+        "tx_hash": "0xe30b585b9641ee94c8b500034b309c701055700d98db30f2c70327618e1ec9ab",
+        "is_simulated": true
+    },
+    "978ad1ecca9542137ed4ab99bf18a8ce8097662b1aa5ad3e681b11c5e237595e": {
+        "exists": true,
+        "timestamp": 1774770636,
+        "category": "SCAM",
+        "tx_hash": "0x4dd067b10f3445a72e6a5673ff93bb1bc0674be9c502d08ed72a5c98f4fa197b",
+        "is_simulated": true
+    },
+    "39ba32de2d9c361a5c322ed91296d22fa95158fe18c724277964a8e48c8062d0": {
+        "exists": true,
+        "timestamp": 1774770731,
+        "category": "DEEPFAKE",
+        "tx_hash": "0xacf285510857b303f04b940642adafc0ca6f8b97cb4eec374f0bf4575a82b2f1",
+        "is_simulated": true
+    },
+    "93e57a5eda41ddd6bac650246f969138c13a82be375d7c1aebde753aac04a410": {
+        "exists": true,
+        "timestamp": 1774771183,
+        "category": "SCAM",
+        "tx_hash": "0xa734d46cc535e2012276343a3d690fa1b0c34878001174cf7115e5a61d39321c",
+        "is_simulated": true
+    },
+    "425102a1b98da7ee2dc3234f61d486147afe4c67cd651ff143931e00c56b3ab9": {
+        "exists": true,
+        "timestamp": 1774771187,
+        "category": "SCAM",
+        "tx_hash": "0x51d34386a979ce43ffa5dc7477a633f7e326944717cecebdd5ce1cbb76248feb",
+        "is_simulated": true
+    },
+    "bf2ec47ada18f02ebc03fb38f84f55caca4e5099207bf0c7909fe0cd0ee4f4f7": {
+        "exists": true,
+        "timestamp": 1774681023,
+        "category": "SAFE",
+        "tx_hash": "0x5bd58b279a9b2361bd2c3046e2ce4c82db01d15f626f087efdcf052a29382951",
+        "is_simulated": true
+    },
+    "abbd783f12df06e9cdb5b06475aebd2103a3c384ba116263c0fb1b9fe3dbf813": {
+        "exists": true,
+        "timestamp": 1774681029,
+        "category": "SAFE",
+        "tx_hash": "0x2a0a32c3bc27ce32535e13e845a5fee1cd906e295abb9a235adfa48e7eb7219e",
+        "is_simulated": true
+    },
+    "0c064e7a9a32a9f78aef90af7823406b48ae40101b9656d8d11ab72b99f834ae": {
+        "exists": true,
+        "timestamp": 1774770913,
+        "category": "SAFE",
+        "tx_hash": "0xf8392c8c176ae77d14e464df3051813da3b1b0ed8f2724ac78961adeda80ddbf",
+        "is_simulated": true
+    },
+    "cb4e346bdd0d9bcb9631d74e5a17786798df317413a767e66ffb78ac2dd185b7": {
+        "exists": true,
+        "timestamp": 1774764412,
+        "category": "SAFE",
+        "tx_hash": "0x24a6aa140d4b2d8385e8176425a2a654bddab3d784bb3457b86a0021dfc6cc8c",
+        "is_simulated": true
+    },
+    "821c80b7989785e7210553affb500d98ecaaeef50cbc152fe696d4b58f400f6d": {
+        "exists": true,
+        "timestamp": 1774681205,
+        "category": "SAFE",
+        "tx_hash": "0x5ef402605fd106a6e11d00c7a50fcdd5bdcb55e32967da5037f0a389d4772052",
+        "is_simulated": true
+    },
+    "e9ce5960e3c51eefe680bf16d4b57973e9762cdf9cc9feb277cc66620dea02b7": {
+        "exists": true,
+        "timestamp": 1774681203,
+        "category": "SAFE",
+        "tx_hash": "0x0445f22780d4cab5cfd4883c0a1102b38715aed679386a462ff78988eb151956",
+        "is_simulated": true
+    },
+    "71856d75de5d590f5461a708dcbec2d24d93dce66a9acf604657148feb6a340d": {
+        "exists": true,
+        "timestamp": 1774681100,
+        "category": "SAFE",
+        "tx_hash": "0x54e796fc4a530e275c3963152489ef77465418f80a407a543c42604b5395dabb",
+        "is_simulated": true
+    },
+    "f897f005e211f7bad97917922eb7a054b969a8fa7a59643dd5a24c36460d8de4": {
+        "exists": true,
+        "timestamp": 1774770989,
+        "category": "SAFE",
+        "tx_hash": "0x9807b7b506f259b44cfbc456f38bd8b62077c016e0286cce4a9dfaca3efaa6d9",
+        "is_simulated": true
+    },
+    "5e20d06ddcfdd53ad14d8a5730f33d51a6382a0311d79621c7691987e7b3d438": {
+        "exists": true,
+        "timestamp": 1774770990,
+        "category": "SAFE",
+        "tx_hash": "0x092d0fa1c25402851312c915c42c25a7dbcb7f1525a6b9e3ec5da42d3b7162a7",
+        "is_simulated": true
+    },
+    "3d9edb5c6822c5a6ea60f88da3efef77d667e3e0f3c0287ff1d29b10ed3a501e": {
+        "exists": true,
+        "timestamp": 1774770997,
+        "category": "SAFE",
+        "tx_hash": "0xaeb5835a2a6b4e37ebee152a0edb43a11dfb0378ee76c3aae64ee902d93d5147",
+        "is_simulated": true
+    },
+    "05dd980b4fa9ff1ceca6903f97151379ff78d73acf40c451cba87b0af50404c4": {
+        "exists": true,
+        "timestamp": 1774681210,
+        "category": "SAFE",
+        "tx_hash": "0xafc170f55e66291e3a9144c7bb468b06459e91697d20ad924b407ceb88848bdb",
+        "is_simulated": true
+    },
+    "7e5b3c158d08463467d3d384d1107b6d9c660a954b478c08a54f16fe7c6d45bd": {
+        "exists": true,
+        "timestamp": 1774681275,
+        "category": "SAFE",
+        "tx_hash": "0x994912b6553b5d453e49fc04c3f94e1868681b9f79077628a5130b04a8bcf777",
+        "is_simulated": true
+    },
+    "fdedc08c1a49d0e10dde4e9b2b0e96f4679e20bbb85b3c6ab75c6a17873bad2f": {
+        "exists": true,
+        "timestamp": 1774770999,
+        "category": "SAFE",
+        "tx_hash": "0xb6a880cb68d7400e9120f2c0ac3f85d5ebdfebb141ab45c91b8300b8bda5d68a",
+        "is_simulated": true
+    },
+    "11ae69b35a4f2ea9966eafcd52389d58d4208070a906c139cee93b8e3258cf25": {
+        "exists": true,
+        "timestamp": 1774681594,
+        "category": "SAFE",
+        "tx_hash": "0x03bbec09d90149d148c3110de8bc869023eabd83b4237460af047a7414aeb9c2",
+        "is_simulated": true
+    },
+    "7a954f33bb86cb7aeb2734c292193ebbd2925f8abd3fac8cada7dea99d8f3941": {
+        "exists": true,
+        "timestamp": 1774764416,
+        "category": "SAFE",
+        "tx_hash": "0x3c39898c319114c86e81023e7190240c733ee963707a4ddb2d631f82c8b37849",
+        "is_simulated": true
+    },
+    "169710789e131a50936c2e09b6c4cd92785a0af867e257a324eb28a71394eb9b": {
+        "exists": true,
+        "timestamp": 1774764417,
+        "category": "SAFE",
+        "tx_hash": "0x79f6548b4c4bfd056c24a1e704dc93b6365ff00c0b9f461a091c99dc9dc73819",
+        "is_simulated": true
+    },
+    "c70438133fa5eecf6bfdc1faf8041d5de083f62df5bff298ce801a4c834e4a7b": {
+        "exists": true,
+        "timestamp": 1774764417,
+        "category": "SAFE",
+        "tx_hash": "0x7aa469be4b1c2f1557f6a45b46b58bcc33ed1da97b648241c25e2c3a4a0d6782",
+        "is_simulated": true
+    },
+    "297d2d24f8119cedc842f505745046a2c7989d9c1bb66b2983d60a5536eeaf97": {
+        "exists": true,
+        "timestamp": 1774770774,
+        "category": "DEEPFAKE",
+        "tx_hash": "0x9f7e63e3c995286e667a25fc2bcc7829956ac3c0a9dcf8ded54e851fe8ddb119",
+        "is_simulated": true
+    },
+    "7d721dad197d801ad47e954e0482fde8ee4ca7c3894b5fad6cd2ec896e00ef04": {
+        "exists": true,
+        "timestamp": 1774770888,
+        "category": "SCAM",
+        "tx_hash": "0xad6606de0126d5b510aa2d5ec3fc1b0236452503a899d492abc56dafee3bb100",
+        "is_simulated": true
+    },
+    "85a7ebbbe7e8c5e75b276b5f9968182e39e0aa2e73db3c196741e73181f7f660": {
+        "exists": true,
+        "timestamp": 1774770920,
+        "category": "SAFE",
+        "tx_hash": "0xa426ed3c215c142d442cf9fc89aca6751af58a4bb319042b683285acb4804e3c",
+        "is_simulated": true
+    },
+    "f23add6267c5e56cb7a69c5f46e3dac5fc37ab77351d73a61e6a8516d3da2116": {
+        "exists": true,
+        "timestamp": 1774770916,
+        "category": "SAFE",
+        "tx_hash": "0xe1f5a51293e1d9189ff3606549c5d6edb151f628be2761a81904012eeb04be9d",
+        "is_simulated": true
+    },
+    "3325b6c0d0e7a89f6a5b34870382f1358680b7b3f0b609c6c86c8152c1793c1f": {
+        "exists": true,
+        "timestamp": 1774770922,
+        "category": "SAFE",
+        "tx_hash": "0xed0681af1387e68751c516450052b9c64f7e5e97071cc775ab8871ec3c43dd0e",
+        "is_simulated": true
+    },
+    "aab23c047ac38c9f003d6c376b63a0d25542be671e31a1d39c37f781757cde01": {
+        "exists": true,
+        "timestamp": 1774770931,
+        "category": "SCAM",
+        "tx_hash": "0x156d713363c913afee057b288df7a41098bf5cd6b2ca156d1f65364884ed13f8",
+        "is_simulated": true
+    },
+    "35aacd32d9a72a466b4c9b35cbf3468292af2b0f1decee71c0bb4f7d85286d15": {
+        "exists": true,
+        "timestamp": 1774770992,
+        "category": "SAFE",
+        "tx_hash": "0xbd560ee59a35512d63a695cdd5889462207071cee944eecc49b2ca907abb9a54",
+        "is_simulated": true
+    },
+    "b71e55702340491f0b2af3ee32a97f1f97135a408a29e789e2bf7e8e7af21e90": {
+        "exists": true,
+        "timestamp": 1774770993,
+        "category": "SAFE",
+        "tx_hash": "0xb95d6fd257ff22b1d3d47c30b1db89c562c5fb0b682b3967901756aca968fc55",
+        "is_simulated": true
+    },
+    "9cfad22fde9094b3a3dda66e2ba1d4d3712b4d9340688bbfcc659e15e61fa135": {
+        "exists": true,
+        "timestamp": 1774770995,
+        "category": "SAFE",
+        "tx_hash": "0xa98996c912ca70931340232a97cc0f613a12b54f9ff42a22cbd8f1b86e89bea1",
+        "is_simulated": true
+    },
+    "b670672ccf6af2152725c5bda9d78c610b9a9a717aae1652a6c10cc96113fe95": {
+        "exists": true,
+        "timestamp": 1774771068,
+        "category": "SAFE",
+        "tx_hash": "0x97b668eee8e76fe5d227adfee2e53d888c085471b0f17e3a546713a1e67f299a",
+        "is_simulated": true
+    },
+    "bbd3790d4a8ba083d213749d5d2bda51b7b04c0e4501940cb8deb695aacf0e7c": {
+        "exists": true,
+        "timestamp": 1774771900,
+        "category": "SAFE",
+        "tx_hash": "0x636a843414aacd5964547dc4f7e2afecb411a3e33c324a63d5dcfbc53f93c923",
+        "is_simulated": true
+    },
+    "00eb75864a1d6cab7d2f88d004590eb248298181195daaee75d34bd843e74c8c": {
+        "exists": true,
+        "timestamp": 1774776096,
+        "category": "SAFE",
+        "tx_hash": "0x7ddc6b95059108345ed593138763da08a7f2d702f78f599c615da3c12f9908f9",
+        "is_simulated": true
+    }
+}

@@ -19,9 +19,11 @@
     </header>
 
     <nav class="tabs">
-      <button class="tab-btn active" data-tab="live">Live Protect</button>
-      <button class="tab-btn" data-tab="image">Media Scan</button>
-      <button class="tab-btn" data-tab="blocked">Blocked Sites</button>
+      <button class="tab-btn active" data-tab="live">Page Scan</button>
+      <button class="tab-btn" data-tab="realtime">Real-Time</button>
+      <button class="tab-btn" data-tab="synthetic">AI Persona</button>
+      <button class="tab-btn" data-tab="safety">Child Safety</button>
+      <button class="tab-btn" data-tab="image">Upload</button>
       <button class="tab-btn" data-tab="history">History</button>
     </nav>
 
@@ -42,23 +44,73 @@
         </div>
       </section>
 
-      <!-- Image/Media Tab (Merged) -->
+      <!-- Real-Time Meeting Tab -->
+      <section id="tab-realtime" class="tab-pane">
+        <div class="card">
+          <h3>Meeting Protection</h3>
+          <p style="font-size: 11px; color: #666; margin-bottom: 10px;">Detect real-time deepfakes on Google Meet, Zoom,
+            and WhatsApp.</p>
+          <button id="toggle-protection-btn" class="primary-btn" style="width: 100%; background: #10b981;">▶ Start Live
+            Protection</button>
+          <div id="realtime-status-list" style="margin-top: 15px;">
+            <!-- Participant list will appear here -->
+            <p class="placeholder">No active meetings detected.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI Persona Scanner Tab -->
+      <section id="tab-synthetic" class="tab-pane">
+        <div class="card">
+          <h3>AI Influence Scanner</h3>
+          <p style="font-size: 11px; color: #666; margin-bottom: 10px;">Scanning Instagram profiles & YouTube thumbnails
+            for synthetic media.</p>
+          <button id="toggle-social-btn" class="primary-btn" style="width: 100%; background: #10b981; margin-bottom: 15px;">▶ Start Social Scanning</button>
+          <div id="synthetic-scan-stats">
+            <div class="stat-row"><span>Media Scanned:</span> <span id="synthetic-count">0</span></div>
+            <div class="stat-row"><span>AI Detections:</span> <span id="ai-count">0</span></div>
+          </div>
+          <div id="synthetic-history" class="history-list" style="margin-top: 10px;">
+            <p class="placeholder">Browse social media to see results.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Child Safety Mode Tab -->
+      <section id="tab-safety" class="tab-pane">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3>Child Safety Mode</h3>
+            <label class="switch">
+              <input type="checkbox" id="child-safety-toggle">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <p style="font-size: 11px; color: #666; margin-bottom: 15px;">Automatically blurs toxic content, cyberbullying, and harmful imagery.</p>
+          
+          <div class="stat-row" style="margin-bottom: 15px; background: #f0fdf4; padding: 10px; border-radius: 6px; border: 1px solid #dcfce7;">
+            <span style="color: #166534; font-weight: 600;">🛡️ Hidden on this page:</span>
+            <span id="hidden-items-count" style="color: #166534; font-weight: 800;">0 items</span>
+          </div>
+
+          <div class="control-group">
+            <label style="font-size: 11px; font-weight: 700; color: #475569; display: block; margin-bottom: 5px;">Protection Level (Age)</label>
+            <select id="child-safety-age" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px;">
+              <option value="Under 13">Under 13 (Strict)</option>
+              <option value="Under 16" selected>Under 16 (Moderate)</option>
+              <option value="Under 18">Under 18 (Casual)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Image/Media Tab (Upload) -->
       <section id="tab-image" class="tab-pane">
         <div class="card upload-area" id="image-upload">
           <p>Drop file (Image/Video/Audio) to scan</p>
           <input type="file" id="image-input" accept="image/*,video/*,audio/*" hidden>
         </div>
         <div id="image-result" class="result-area"></div>
-      </section>
-
-      <!-- Blocked Sites Tab -->
-      <section id="tab-blocked" class="tab-pane">
-        <div class="card">
-          <h3>Domain Blacklist</h3>
-          <div id="blocked-list" class="history-list">
-            <p class="placeholder">No domains blocked yet.</p>
-          </div>
-        </div>
       </section>
 
       <!-- History Tab -->
