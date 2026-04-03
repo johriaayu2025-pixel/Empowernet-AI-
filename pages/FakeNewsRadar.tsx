@@ -113,7 +113,10 @@ const FakeNewsRadar: React.FC = () => {
     setScanResult(null);
 
     try {
-      const response = await fetch('http://localhost:8001/analyze/text', {
+      let baseUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8001";
+      if (baseUrl && !baseUrl.startsWith("http")) baseUrl = `https://${baseUrl}`;
+      baseUrl = baseUrl.replace(/\/$/, "");
+      const response = await fetch(`${baseUrl}/analyze/text`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: newsText, mode: 'fake_news' })
