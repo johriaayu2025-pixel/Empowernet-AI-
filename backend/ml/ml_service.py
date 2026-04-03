@@ -117,6 +117,23 @@ class MLService:
         self.openai_client = None
 
     def get_vision_ensemble_score(self, face_pil):
+        if hasattr(self, "load_heavy_models") and not self.load_heavy_models:
+            gemini_key = os.getenv("GEMINI_API_KEY")
+            if gemini_key:
+                try:
+                    import google.generativeai as genai
+                    genai.configure(api_key=gemini_key)
+                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    prompt = "Analyze this image/face for AI-generated artifacts. Reply strictly with ONLY a float number from 0.0 to 1.0 (e.g. 0.92 for deepfake). No extra text."
+                    response = model.generate_content([prompt, face_pil])
+                    import re
+                    match = re.search(r"0\.\d+|1\.0|0", response.text.strip())
+                    return float(match.group(0)) if match else 0.5
+                except Exception as e:
+                    print(f"Cloud Logic Error: {e}")
+                    return 0.5
+            return 0.5
+
         weights = {"b5": 0.25, "wvolf": 0.35, "dima": 0.25, "temporal": 0.15}
         scores = []
         total_weight = 0
