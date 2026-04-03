@@ -27,39 +27,15 @@ def read_root():
 def health_check():
     return {"status": "healthy"}
 
-# Railway/Production CORS handling
-allowed_origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3001",
-    "http://localhost:3002",
-    "http://127.0.0.1:3002",
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-# Add custom frontend URL if provided via environment variable
-frontend_url = os.getenv("FRONTEND_URL")
-if frontend_url:
-    allowed_origins.append(frontend_url)
-
+# Production CORS handling: Allow all origins to prevent Vercel/Extension blockers
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins + [
-        "http://localhost:8001",
-        "http://127.0.0.1:8001",
-        "https://meet.google.com",
-        "https://www.instagram.com",
-        "https://www.youtube.com",
-        "https://web.whatsapp.com",
-        "https://app.zoom.us"
-    ],
-    allow_origin_regex="chrome-extension://.*",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Debug middleware for extension tracking
 @app.middleware("http")
