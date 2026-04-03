@@ -11,7 +11,7 @@ python-multipart
 google-generativeai
 timm
 opencv-python
-pillow
+pillow>=10.2.0
 facenet-pytorch
 numpy<2.0.0
 web3
