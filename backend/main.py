@@ -411,10 +411,13 @@ async def analyze_audio_social(payload: dict):
     return result
 
 if __name__ == "__main__":
+    # In production (Render), we set reload=False to save RAM and improve stability
+    # Use the PORT environment variable provided by Render
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=int(os.getenv("PORT", 8001)),
         timeout_keep_alive=30,
-        reload=True
+        reload=False 
     )
+

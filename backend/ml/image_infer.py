@@ -1,30 +1,14 @@
 import base64
 import io
-import torch
-import timm
-import cv2
-import numpy as np
-try:
-    import easyocr
-except ImportError:
-    easyocr = None
-    print("WARNING: EasyOCR not found. OCR features will be disabled.")
+import os
 from PIL import Image, ImageChops
-from torchvision import transforms
-try:
-    from facenet_pytorch import MTCNN
-except Exception:
-    MTCNN = None
-    print("WARNING: facenet_pytorch not available. Face cropping will use OpenCV fallback.")
-from ml.explain import build_image_summary
-from ml.text_infer import analyze_text # Reuse text logic
-
-from ml.ml_service import ml_service
-from ml.child_safety import analyze_child_safety_image
 from ml.explain import build_image_summary
 from ml.text_infer import analyze_text 
+from ml.ml_service import ml_service
+from ml.child_safety import analyze_child_safety_image
 
 def error_level_analysis(image: Image.Image) -> float:
+    import numpy as np
     try:
         buffer = io.BytesIO()
         image.save(buffer, "JPEG", quality=90)
@@ -42,6 +26,7 @@ def error_level_analysis(image: Image.Image) -> float:
         return 0.0
 
 async def analyze_image_base64(base64_str: str):
+    import numpy as np
     try:
         if "," in base64_str:
             base64_str = base64_str.split(",")[1]
@@ -52,14 +37,14 @@ async def analyze_image_base64(base64_str: str):
 
         features_list = []
         
-        # 1. Unified Synthetic Media Detection (OpenAI Vision + Local Ensemble)
+        # 1. Unified Synthetic Media Detection (Gemini Cloud or Local Ensemble)
         synthetic_res = await ml_service.detect_synthetic_media(base64_str)
         synthetic_score = synthetic_res.get("synthetic_score", 0.5)
         
         if synthetic_res.get("status") == "DEEPFAKE":
             features_list.append(f"AI Detection ({synthetic_res.get('model')}): {synthetic_res.get('explanation', 'High Confidence Artifacts Detected')}")
         
-        # 2. ELA
+        # 2. ELA (Heuristic - stays active in memory mode)
         ela_score = error_level_analysis(image)
         if ela_score > 0.6:
             features_list.append("High Error Level Analysis (ELA) Artifacts")
@@ -69,10 +54,12 @@ async def analyze_image_base64(base64_str: str):
         if not safety_res.get("is_safe"):
             features_list.extend(safety_res.get("flags", []))
 
-        # 4. OCR Scan (Preserved original feature)
+        # 4. OCR Scan (Conditional)
         text_risk_score = 0.0
-        try:
-            if easyocr:
+        if os.getenv("LOAD_MODELS", "false").lower() == "true":
+            try:
+                import torch
+                import easyocr
                 reader = easyocr.Reader(['en'], gpu=torch.cuda.is_available(), verbose=False)
                 ocr_results = reader.readtext(np_image, detail=0)
                 extracted_text = " ".join(ocr_results)
@@ -81,11 +68,10 @@ async def analyze_image_base64(base64_str: str):
                     text_risk_score = text_res.get("riskScore", 0) / 100.0
                     if text_risk_score > 0.5:
                         features_list.append(f"Scam Text Detected: {text_res.get('category')}")
-        except Exception as e:
-            print(f"OCR Error: {e}")
+            except Exception as e:
+                print(f"OCR Error: {e}")
             
-        # Ensemble Logic: (Synthetic 75%) + (ELA 25%)
-        # Modified to account for safety flags
+        # Ensemble Logic
         base_score = (synthetic_score * 0.75) + (ela_score * 0.25)
         if text_risk_score > 0.4:
             base_score = max(base_score, text_risk_score)
@@ -109,7 +95,7 @@ async def analyze_image_base64(base64_str: str):
                 f"Safety Status: {'Safe' if safety_res.get('is_safe') else 'Flagged'}"
             ],
             "modelDetails": {
-                "architecture": "Ensemble (EfficientNet-B5 + Deep-Fake-Detector-v2 ViT + dima806/ViT + Organika/sdxl-detector + ELA)",
+                "architecture": "Ensemble (Vision + ELA)" if os.getenv("LOAD_MODELS") != "true" else "Ensemble (EfficientNet-B5 + ViT + ELA)",
                 "featuresAnalysed": features_list if features_list else ["No visual anomalies detected"]
             },
             "userSummary": build_image_summary(
@@ -121,3 +107,4 @@ async def analyze_image_base64(base64_str: str):
         }
     except Exception as e:
         return {"error": f"Internal Inference Error: {str(e)}"}
+

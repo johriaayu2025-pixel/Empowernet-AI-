@@ -1,20 +1,14 @@
 import base64
-import cv2
-import numpy as np
-import torch
 import os
 from PIL import Image
-from moviepy import VideoFileClip
 from ml.ml_service import ml_service
 from ml.audio_infer import analyze_audio
-try:
-    import easyocr
-except ImportError:
-    easyocr = None
 from ml.explain import build_video_summary
 
 def analyze_video_base64_plus(base64_video: str):
     import uuid
+    import cv2
+    import numpy as np
     temp_id = str(uuid.uuid4())
     temp_video_path = f"temp_video_{temp_id}.mp4"
     temp_audio_path = f"temp_audio_{temp_id}.wav"
@@ -46,25 +40,25 @@ def analyze_video_base64_plus(base64_video: str):
             img_pil = Image.fromarray(rgb)
             
             # Use MLService for ensemble vision detection
-            # We detect faces first to ensure we analyze the face
             if ml_service.face_detector:
                 results = ml_service.face_detector.process(cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR))
                 if results and results.detections:
                     detection = results.detections[0]
                     bbox = detection.location_data.relative_bounding_box
                     h, w, _ = frame.shape
-                    xmin, ymin = int(bbox.xmin * w), int(bbox.ymin * h)
-                    width, height = int(bbox.width * w), int(bbox.height * h)
-                    face_img = frame[max(0, ymin):min(h, ymin+height), max(0, xmin):min(w, xmin+width)]
+                    face_img = frame[max(0, int(bbox.ymin * h)):min(h, int((bbox.ymin + bbox.height) * h)), 
+                                      max(0, int(bbox.xmin * w)):min(w, int((bbox.xmin + bbox.width) * w))]
                     if face_img.size > 0:
                         img_pil = Image.fromarray(cv2.cvtColor(face_img, cv2.COLOR_BGR2RGB))
             
             score = ml_service.get_vision_ensemble_score(img_pil)
             frame_scores.append(score)
             
-            # Run OCR on the middle frame to catch scam text
-            if pos == 0.5 and easyocr:
+            # OCR Scan (Preserved original feature - only if models are allowed)
+            if pos == 0.5 and os.getenv("LOAD_MODELS", "false").lower() == "true":
                 try:
+                    import torch
+                    import easyocr
                     reader = easyocr.Reader(['en'], gpu=torch.cuda.is_available(), verbose=False)
                     ocr_results = reader.readtext(rgb, detail=0)
                     extracted_text = " ".join(ocr_results)
@@ -73,16 +67,14 @@ def analyze_video_base64_plus(base64_video: str):
                         text_res = analyze_text(extracted_text)
                         text_risk = text_res.get("riskScore", 0) / 100.0
                         if text_risk > 0.4:
-                            # Boost frame score heavily if scam text is present
                             frame_scores[-1] = max(frame_scores[-1], text_risk)
                 except Exception as e:
                     print(f"Video OCR Error: {e}")
         else:
-            frame_scores.append(0.5) # Default if frame skip fails
+            frame_scores.append(0.5) 
             
     cap.release()
     
-    # PROBLEM 2 — Temporal consistency check
     temporal_inconsistency = 0
     for i in range(1, len(frame_scores)):
         diff = abs(frame_scores[i] - frame_scores[i-1])
@@ -92,7 +84,7 @@ def analyze_video_base64_plus(base64_video: str):
     base_visual_score = sum(frame_scores) / len(frame_scores) if frame_scores else 0.5
     video_visual_score = min(1.0, base_visual_score + temporal_inconsistency)
     
-    # PROBLEM 4 — Audio track analysis
+    # Audio track analysis (FFmpeg fallback)
     video_audio_score = 0.5
     try:
         import subprocess
@@ -113,14 +105,11 @@ def analyze_video_base64_plus(base64_video: str):
     except Exception as e:
         print(f"Audio extraction failed: {e}")
         
-    # Combined Ensemble Score
     combined_score = (video_visual_score * 0.6) + (video_audio_score * 0.4)
     
-    # Cleanup
     if os.path.exists(temp_video_path): os.remove(temp_video_path)
     if os.path.exists(temp_audio_path): os.remove(temp_audio_path)
     
-    # Response Format
     return {
         "deepfake_probability": float(round(combined_score, 4)),
         "visual_score": float(round(video_visual_score, 4)),
@@ -129,6 +118,7 @@ def analyze_video_base64_plus(base64_video: str):
         "temporal_inconsistency": float(round(temporal_inconsistency, 4)),
         "verdict": "DEEPFAKE" if combined_score > 0.5 else "AUTHENTIC",
         "confidence": float(round(abs(combined_score - 0.5) * 2, 4)) if combined_score != 0.5 else 0.0,
-        "category": "DEEPFAKE" if combined_score > 0.5 else "REAL", # For backward compatibility
+        "category": "DEEPFAKE" if combined_score > 0.5 else "REAL", 
         "riskScore": int(combined_score * 100)
     }
+
