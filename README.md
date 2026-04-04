@@ -4,6 +4,10 @@
 EmpowerNet AI is an explainable, multi-modal security system that detects **scams, phishing, social engineering, and AI-generated deepfakes** across **text, images, audio, and video**.  
 It combines transformer models, computer vision, signal forensics, and heuristic risk scoring to deliver **real-time, trustworthy threat analysis**.
 
+
+DEMO VIDEO-https://drive.google.com/file/d/1N0-l76tcmqyVLoJneCnO7WZ6s42YjIZt/view?usp=sharing
+PPT-https://drive.google.com/file/d/1ZtSXO3dTaolsT6nSjgyIdRULqXTgTIYL/view?usp=sharing
+
 ---
 
 # 🚀 Features
